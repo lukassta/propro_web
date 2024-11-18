@@ -10,40 +10,26 @@ int callback(void *NotUsed, int argc, char **argv, char **azColName) {
     return 0;
 }
 
-int getLatestEntry(sqlite3 *db){
+int getLatestEntryId(sqlite3 *db){
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT Id FROM Entries ORDER BY Id DESC LIMIT 1;"; // Query to get the latest entry
+    const char *sql = "SELECT Id FROM Entries ORDER BY Id DESC LIMIT 1;";
+    int latestId = 0;
 
-    // Prepare the SQL statement
     int resultCode = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
     if (resultCode != SQLITE_OK) {
         fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
-        return -1;  // Return -1 on error
+        return 1;
     }
 
-    // Execute the query and fetch the result
     resultCode = sqlite3_step(stmt);
     if (resultCode == SQLITE_ROW) {
-        // The Id of the latest entry is in the first column (0-indexed)
-        int latestId = sqlite3_column_int(stmt, 0);
-        sqlite3_finalize(stmt);  // Clean up the prepared statement
-        return latestId;  // Return the latest entry ID
+        latestId = sqlite3_column_int(stmt, 0);
+        sqlite3_finalize(stmt);
     } else {
         fprintf(stderr, "No entries found in the table.\n");
         sqlite3_finalize(stmt);
-        return -1;  // Return -1 if no entry is found
     }
-
-    // char *errorMessage = 0;
-    // char *sql = "SELECT MAX(Id) FROM Entries";
-    // int resultCode = sqlite3_exec(db, sql, callback, 0, &errorMessage);
-
-    // if (resultCode != SQLITE_OK) {
-    //     fprintf(stderr, "SQL error: %s\n", errorMessage);
-    //     sqlite3_free(errorMessage);
-    //     return 1;
-    // }
-    // return 0;
+    return latestId;
 }
 
 int insertData(sqlite3 *db, char *teamName, char *title, char *code, char *description) {
@@ -86,7 +72,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char *sql = "CREATE TABLE IF NOT EXISTS Entries(Id INTEGER PRIMARY KEY, TeamName TEXT, Title TEXT, Code TEXT, Description TEXT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP);";
+    char *sql = "CREATE TABLE IF NOT EXISTS Entries(Id INTEGER PRIMARY KEY, TeamName TEXT, Title TEXT, Code TEXT, Description TEXT, Likes INTEGER DEFAULT 0, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP);";
     resultCode = sqlite3_exec(db, sql, 0, 0, &errorMessage);
 
     if (resultCode != SQLITE_OK) {
@@ -110,7 +96,7 @@ int main(int argc, char *argv[]) {
     }
 
     if ((argc > 1) && (strcmp(argv[1], "-l") == 0)) {
-        printf("Latest id: %d\n", getLatestEntry(db));
+        printf("Latest id: %d\n", getLatestEntryId(db));
     }
 
     sqlite3_close(db);

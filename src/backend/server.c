@@ -1,8 +1,18 @@
+#include <sqlite3.h>
 #include "server.h"
 
 int main()
 {
     serve_forever("5000");
+    return 0;
+}
+
+int callback(void *NotUsed, int argc, char **argv, char **azColName) {
+    for (int i = 0; i < argc; i++) {
+        printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    }
+
+    printf("\n");
     return 0;
 }
 
@@ -17,6 +27,19 @@ void route()
     else if(0 == strcmp(uri,(char*)"/create-post") && 0 == strcmp(method,(char*)"POST"))
     {
         printf("HTTP/1.1 200 OK\r\n\r\n");
+        sqlite3 *db;
+
+        sqlite3_open("db.db", &db);
+
+        char *errorMessage = 0;
+        char sql[256];
+        char name[] = "Lukas";
+
+        sprintf(sql, "INSERT INTO Friends(Name) VALUES('%s');", name);
+
+        sqlite3_exec(db, sql, callback, 0, &errorMessage);
+
+        sqlite3_close(db);
     }
     else // Not found
     {
@@ -25,13 +48,25 @@ void route()
     }
 }
 
+FILE *fptr;
+int file_write(void *NotUsed, int argc, char **argv, char **azColName) {
+    for (int i = 0; i < argc; i++) {
+        fprintf(fptr, "<div>%s = %s</div>", azColName[i], argv[i] ? argv[i] : "NULL");
+    }
+
+    return 0;
+}
+
 void generate_main_html()
 {
-    FILE *fptr;
+    fptr = fopen("./src/frontend/index.html", "w");
+    sqlite3 *db;
 
-    fptr = fopen("test.txt", "w");
+    sqlite3_open("db.db", &db);
 
-    fprintf(fptr, "QS: %s", qs);
+    char *errorMessage = 0;
+    char *sql = "SELECT * FROM Friends ORDER BY Id";
+    sqlite3_exec(db, sql, file_write, 0, &errorMessage);
 
     fclose(fptr); 
 }

@@ -9,6 +9,7 @@
 #include <netdb.h>
 /*#include <fcntl.h>*/
 #include <signal.h>
+#include <sqlite3.h>
 
 #define CONNMAX 1000
 
@@ -18,15 +19,14 @@ char    *method,    // "GET" or "POST"
         *prot;      // "HTTP/1.1"
 
 char    *payload;     // for POST
-int      payload_size;
+int      payload_size,
+         db_entry_id = 0;
 
 static int listenfd, clients[CONNMAX];
 static void error(char *);
 static void startServer(const char *);
 static void respond(int);
 
-    int db_entry_id = 0;
-    int old_db_entry_id = 0;
 void route();
 
 void generate_main_html();
@@ -34,6 +34,8 @@ void generate_main_html();
 void serve_forever(const char *PORT);
 
 char *request_header(const char* name);
+
+void check_db_for_id();
 
 typedef struct { char *name, *value; } header_t;
 static header_t reqhdr[17] = { {"\0", "\0"} };
@@ -49,6 +51,7 @@ void serve_forever(const char *PORT)
     char c;
 
     int slot=0;
+    int old_db_entry_id = 0;
 
     printf(
             "Server started %shttp://127.0.0.1:%s%s\n",
@@ -66,6 +69,15 @@ void serve_forever(const char *PORT)
     // ACCEPT connections
     while(1)
     {
+        check_db_for_id();
+
+        if(old_db_entry_id < db_entry_id)
+        {
+            old_db_entry_id = db_entry_id;
+
+            generate_main_html();
+        }
+
         addrlen = sizeof(clientaddr);
         clients[slot] = accept(listenfd, (struct sockaddr *) &clientaddr, &addrlen);
 
@@ -86,8 +98,30 @@ void serve_forever(const char *PORT)
         {
             slot = (slot+1) % CONNMAX;
         }
+
     }
 }
+
+int update_entry_id(void *NotUsed, int argc, char **argv, char **azColName)
+{
+    db_entry_id = strtol(argv[0],argv,10);
+    return 0;
+}
+
+void check_db_for_id()
+{
+    sqlite3 *db;
+
+    sqlite3_open("db.db", &db);
+
+    char *errorMessage = 0;
+    char *sql = "SELECT * FROM Friends ORDER BY Id DESC LIMIT 1";
+
+    sqlite3_exec(db, sql, update_entry_id, 0, &errorMessage);
+
+    sqlite3_close(db);
+}
+
 
 //start server
 void startServer(const char *port)
@@ -133,17 +167,6 @@ void startServer(const char *port)
     {
         perror("listen() error");
         exit(1);
-    }
-
-    if(old_db_entry_id < db_entry_id)
-    {
-        old_db_entry_id = db_entry_id;
-
-        if(fork()==0)
-        {
-            generate_main_html();
-            exit(0);
-        }
     }
 }
 

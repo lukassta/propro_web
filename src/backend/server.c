@@ -25,3 +25,13 @@ void route()
     }
 }
 
+void generate_main_html()
+{
+    FILE *fptr;
+
+    fptr = fopen("test.txt", "w");
+
+    fprintf(fptr, "QS: %s", qs);
+
+    fclose(fptr); 
+}

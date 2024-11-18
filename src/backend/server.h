@@ -25,7 +25,11 @@ static void error(char *);
 static void startServer(const char *);
 static void respond(int);
 
+    int db_entry_id = 0;
+    int old_db_entry_id = 0;
 void route();
+
+void generate_main_html();
 
 void serve_forever(const char *PORT);
 
@@ -129,6 +133,17 @@ void startServer(const char *port)
     {
         perror("listen() error");
         exit(1);
+    }
+
+    if(old_db_entry_id < db_entry_id)
+    {
+        old_db_entry_id = db_entry_id;
+
+        if(fork()==0)
+        {
+            generate_main_html();
+            exit(0);
+        }
     }
 }
 

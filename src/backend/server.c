@@ -1,72 +1,134 @@
-#include <sqlite3.h>
 #include "server.h"
+#include <sqlite3.h>
+#include <stdio.h>
+
+void initiate_db();
+
+void initiate_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *addrlen);
+
+void send_file(int client_sock_fd, char *file_name);
+
+void render_index_html();
+
+int callback(void *NotUsed, int argc, char **argv, char **azColName) {
+    return 0;
+}
 
 int main()
 {
-    serve_forever("5000");
+    struct sockaddr_in address;
+    socklen_t addrlen = sizeof(address);
+    int server_sock_fd;
+
+    initiate_db();
+    start_server(&server_sock_fd, &address, &addrlen);
+
+    accept_requests_server(server_sock_fd, address, addrlen);
     return 0;
 }
 
-int callback(void *NotUsed, int argc, char **argv, char **azColName) {
-    for (int i = 0; i < argc; i++) {
-        printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-    }
-
-    printf("\n");
-    return 0;
-}
-
-void route()
+void route_get(int client_sock_fd, char *uri)
 {
-    if(0 == strcmp(uri,(char*)"/") && 0 == strcmp(method,(char*)"GET"))
+    if(!strcmp(uri, "/favicon.png"))
     {
-        printf("HTTP/1.1 200 OK\r\n\r\n");
-        /*printf("<!DOCTYPE html><html><head><title>Page Title</title><style>body {");*/
-        /*printf("background-color: powderblue;}h1 {color: red;}p {color: blue;}</style></head>  <body><h1>This is a Heading</h1><p>This is a paragraph.</p><p>The content of the body element is displayed in the browser window.</p><p>The content of the title element is displayed in the browser tab, in favorites and in search-engine results.</p></body></html>");*/
+        send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type:image/png\n\n", 40, 0);
+        char file_name[] = "./public/favicon.png";
+        send_file(client_sock_fd, file_name);
     }
-    else if(0 == strcmp(uri,(char*)"/create-post") && 0 == strcmp(method,(char*)"POST"))
+    else
     {
-        printf("HTTP/1.1 200 OK\r\n\r\n");
+        send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type: text/html\n\n", 42, 0);
+
+        send(client_sock_fd, "<h1>BANANA</h1>\n", 14, 0);
+        send_file(client_sock_fd, "./src/frontend/test.html");
+    }
+}
+
+void route_post(int client_sock_fd, char *uri)
+{
+    if(!strcmp(uri, "/create-post"))
+    {
         sqlite3 *db;
 
-        sqlite3_open("db.db", &db);
+        sqlite3_open("snipper.db", &db);
 
         char *errorMessage = 0;
         char sql[256];
-        char name[] = "Lukas";
+        char teamName[] = "Snipper";
+        char title[] = "Test code";
+        char code[] = "<div>a</div>";
+        char description[] = "Sitas kodas...";
 
-        sprintf(sql, "INSERT INTO Friends(Name) VALUES('%s');", name);
+        sprintf(sql, "INSERT INTO Entries(TeamName, Title, Code, Description) VALUES('%s', '%s', '%s', '%s');", teamName, title, code, description);
 
-        sqlite3_exec(db, sql, callback, 0, &errorMessage);
+        int resultCode = sqlite3_exec(db, sql, callback, 0, &errorMessage);
+
+        if(resultCode != SQLITE_OK)
+        {
+            sqlite3_close(db);
+            perror("Cant open database");
+            exit(EXIT_FAILURE);
+        }
 
         sqlite3_close(db);
+
+        send(client_sock_fd, "HTTP/1.1 204 No content\n\n", 25, 0);
+
+        render_index_html();
     }
-    else // Not found
+    else
     {
-        printf("HTTP/1.1 404 NOT_FOUND\r\n\r\n");
-        printf("<!DOCTYPE html><html><body><h1>404</h1><p>Not found.</p></body></html> ");
+        send(client_sock_fd, "HTTP/1.1 404 Not Found\n\n", 24, 0);
     }
+}
+
+void initiate_db()
+{
+    sqlite3 *db;
+    char *errorMessage = 0;
+
+    int resultCode = sqlite3_open("snipper.db", &db);
+
+    if(resultCode != SQLITE_OK)
+    {
+        sqlite3_close(db);
+        perror("Cant open database");
+        exit(EXIT_FAILURE);
+    }
+
+    char *sql = "CREATE TABLE IF NOT EXISTS Entries(Id INTEGER PRIMARY KEY, TeamName TEXT, Title TEXT, Code TEXT, Description TEXT, Likes INTEGER DEFAULT 0, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP);";
+    resultCode = sqlite3_exec(db, sql, 0, 0, &errorMessage);
+
+    if (resultCode != SQLITE_OK) {
+        perror("SQL error");
+        sqlite3_free(errorMessage);
+        sqlite3_close(db);
+        exit(EXIT_FAILURE);
+    }
+    sqlite3_close(db);
 }
 
 FILE *fptr;
 int file_write(void *NotUsed, int argc, char **argv, char **azColName) {
     for (int i = 0; i < argc; i++) {
-        fprintf(fptr, "<div>%s = %s</div>", azColName[i], argv[i] ? argv[i] : "NULL");
+        fprintf(fptr, "<div>%s</div>\n", argv[i]);
     }
 
     return 0;
 }
 
-void generate_main_html()
+void render_index_html()
 {
     fptr = fopen("./src/frontend/index.html", "w");
     sqlite3 *db;
 
-    sqlite3_open("db.db", &db);
+    sqlite3_open("snipper.db", &db);
 
     char *errorMessage = 0;
-    char *sql = "SELECT * FROM Friends ORDER BY Id";
+    char *sql = "SELECT * FROM Entries ORDER BY Id";
     sqlite3_exec(db, sql, file_write, 0, &errorMessage);
 
     fclose(fptr); 
+
+    sqlite3_close(db);
 }

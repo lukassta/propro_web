@@ -1,254 +1,109 @@
+#include <netinet/in.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-/*#include <sys/types.h>*/
-/*#include <sys/stat.h>*/
+#include <string.h>
 #include <sys/socket.h>
-/*#include <arpa/inet.h>*/
-#include <netdb.h>
-/*#include <fcntl.h>*/
-#include <signal.h>
-#include <sqlite3.h>
+#include <unistd.h>
 
-#define CONNMAX 1000
+#define PORT 8080
 
-char    *method,    // "GET" or "POST"
-        *uri,       // "/index.html" things before '?'
-        *qs,        // "a=1&b=2"     things after  '?'
-        *prot;      // "HTTP/1.1"
+void route_get(int client_sock_fd, char *uri);
+void route_post(int client_sock_fd, char *uri);
 
-char    *payload;     // for POST
-int      payload_size,
-         db_entry_id = 0;
-
-static int listenfd, clients[CONNMAX];
-static void error(char *);
-static void startServer(const char *);
-static void respond(int);
-
-void route();
-
-void generate_main_html();
-
-void serve_forever(const char *PORT);
-
-char *request_header(const char* name);
-
-void check_db_for_id();
-
-typedef struct { char *name, *value; } header_t;
-static header_t reqhdr[17] = { {"\0", "\0"} };
-static int clientfd;
-
-static char *buf;
-
-
-void serve_forever(const char *PORT)
+void start_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *addrlen)
 {
-    struct sockaddr_in clientaddr;
-    socklen_t addrlen;
-    char c;
+    int opt = 1;
 
-    int slot=0;
-    int old_db_entry_id = 0;
+    if((*server_sock_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        perror("Server socket failure");
+        exit(EXIT_FAILURE);
+    }
 
-    printf(
-            "Server started %shttp://127.0.0.1:%s%s\n",
-            "\033[92m",PORT,"\033[0m"
-            );
+    if(setsockopt(*server_sock_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        perror("Setsockopt failure");
+        exit(EXIT_FAILURE);
+    }
+    address -> sin_family = AF_INET;
+    address -> sin_addr.s_addr = INADDR_ANY;
+    address -> sin_port = htons(PORT);
 
-    // Setting all elements to -1: signifies there is no client connected
-    for (int i=0; i<CONNMAX; ++i)
-        clients[i]=-1;
-    startServer(PORT);
+    if(bind(*server_sock_fd, (struct sockaddr*)address, sizeof(*address)) < 0)
+    {
+        perror("Bind failed");
+        exit(EXIT_FAILURE);
+    }
 
-    // Ignore SIGCHLD to avoid zombie threads
-    signal(SIGCHLD,SIG_IGN);
+    if(listen(*server_sock_fd, 100) < 0) {
+        perror("Listen failure");
+        exit(EXIT_FAILURE);
+    }
+}
 
-    // ACCEPT connections
+void parse_request(int client_sock_fd)
+{
+    char buffer[1024], *method, *uri, *prot, *temp;
+    recv(client_sock_fd, buffer, sizeof(buffer) - 1, 0);
+
+    printf("%s\n", buffer);
+
+    method = strtok(buffer,  " \t\r\n");
+    uri = strtok(NULL, " \t");
+    prot = strtok(NULL, " \t\r\n");
+
+    /*for(int i = 0; i < 14; ++i)*/
+    /*{*/
+    /*    temp = strtok(NULL, "\n");*/
+    /*    printf("%s\n", temp);*/
+    /*}*/
+
+
+    printf("%s %s\n\n", method, uri);
+
+    if(!strcmp(method, "POST"))
+    {
+        route_post(client_sock_fd, uri);
+    }
+    else
+    {
+        route_get(client_sock_fd, uri);
+    }
+}
+
+void accept_requests_server(int server_sock_fd, struct sockaddr_in address, socklen_t addrlen)
+{
+    int client_sock_fd;
+
+    printf("Server started %shttp://127.0.0.1:%d%s\n\n", "\033[92m", PORT, "\033[0m");
+
     while(1)
     {
-        check_db_for_id();
-
-        if(old_db_entry_id < db_entry_id)
-        {
-            old_db_entry_id = db_entry_id;
-
-            generate_main_html();
+        if((client_sock_fd = accept(server_sock_fd, (struct sockaddr*)&address, &addrlen)) < 0) {
+            perror("Accept failure");
+            exit(EXIT_FAILURE);
         }
 
-        addrlen = sizeof(clientaddr);
-        clients[slot] = accept(listenfd, (struct sockaddr *) &clientaddr, &addrlen);
+        parse_request(client_sock_fd);
 
-        if (clients[slot]<0)
-        {
-            perror("accept() error");
-        }
-        else
-        {
-            if(fork()==0)
-            {
-                respond(slot);
-                exit(0);
-            }
-        }
-
-        while(clients[slot]!=-1)
-        {
-            slot = (slot+1) % CONNMAX;
-        }
-
+        close(client_sock_fd);
     }
 }
 
-int update_entry_id(void *NotUsed, int argc, char **argv, char **azColName)
+void send_file(int client_sock_fd, char *file_name)
 {
-    db_entry_id = strtol(argv[0],argv,10);
-    return 0;
-}
+    int file_buff_size = 10240;
+    char file_buff[file_buff_size];
+    FILE *ptr_file;
+    size_t bytes_read;
 
-void check_db_for_id()
-{
-    sqlite3 *db;
-
-    sqlite3_open("db.db", &db);
-
-    char *errorMessage = 0;
-    char *sql = "SELECT * FROM Friends ORDER BY Id DESC LIMIT 1";
-
-    sqlite3_exec(db, sql, update_entry_id, 0, &errorMessage);
-
-    sqlite3_close(db);
-}
-
-
-//start server
-void startServer(const char *port)
-{
-    struct addrinfo hints, *res, *p;
-
-    // getaddrinfo for host
-    memset (&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-
-    if(getaddrinfo( NULL, port, &hints, &res) != 0)
-    {
-        perror ("getaddrinfo() error");
-        exit(1);
-    }
-    // socket and bind
-    for(p = res; p!=NULL; p=p->ai_next)
-    {
-        int option = 1;
-        listenfd = socket (p->ai_family, p->ai_socktype, 0);
-        setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-        if (listenfd == -1)
-        {
-            continue;
-        }
-        if(bind(listenfd, p->ai_addr, p->ai_addrlen) == 0)
-        {
-            break;
-        }
-    }
-    if(p==NULL)
-    {
-        perror("socket() or bind()");
-        exit(1);
+    if((ptr_file = fopen(file_name, "rb")) == NULL){
+        perror("Cant open file");
+        exit(EXIT_FAILURE);
     }
 
-    freeaddrinfo(res);
-
-    // listen for incoming connections
-    if(listen(listenfd, 1000000) != 0)
+    while((bytes_read = fread(file_buff, 1, file_buff_size, ptr_file )) > 0)
     {
-        perror("listen() error");
-        exit(1);
+        send(client_sock_fd, file_buff, bytes_read, 0);
     }
 }
 
-// get request header
-char *request_header(const char* name)
-{
-    header_t *h = reqhdr;
-    while(h->name) {
-        if (strcmp(h->name, name) == 0) return h->value;
-        h++;
-    }
-    return NULL;
-}
-
-//client connection
-void respond(int n)
-{
-    int rcvd, fd, bytes_read;
-    char *ptr;
-
-    buf = malloc(65535);
-    rcvd = recv(clients[n], buf, 65535, 0);
-
-    if (rcvd<0)    // receive error
-        fprintf(stderr,("recv() error\n"));
-    else if (rcvd==0)    // receive socket closed
-        fprintf(stderr,"Client disconnected upexpectedly.\n");
-    else    // message received
-    {
-        buf[rcvd] = '\0';
-
-        method = strtok(buf,  " \t\r\n");
-        uri    = strtok(NULL, " \t");
-        prot   = strtok(NULL, " \t\r\n"); 
-
-        printf("%s\n", uri);
-        printf("%s\n", method);
-        fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
-
-        if (qs = strchr(uri, '?'))
-        {
-            *qs++ = '\0'; //split URI
-        } else {
-            qs = uri - 1; //use an empty string
-        }
-
-        header_t *h = reqhdr;
-        char *t, *t2;
-        while(h < reqhdr+16) {
-            char *k,*v,*t;
-            k = strtok(NULL, "\r\n: \t"); if (!k) break;
-            v = strtok(NULL, "\r\n");     while(*v && *v==' ') v++;
-            h->name  = k;
-            h->value = v;
-            h++;
-            fprintf(stderr, "[H] %s: %s\n", k, v);
-            t = v + 1 + strlen(v);
-            if (t[1] == '\r' && t[2] == '\n') break;
-        }
-        t++; // now the *t shall be the beginning of user payload
-        t2 = request_header("Content-Length"); // and the related header if there is  
-        payload = t;
-        payload_size = t2 ? atol(t2) : (rcvd-(t-buf));
-
-        // bind clientfd to stdout, making it easier to write
-        clientfd = clients[n];
-        dup2(clientfd, STDOUT_FILENO);
-        close(clientfd);
-
-        // call router
-        route();
-
-        // tidy up
-        fflush(stdout);
-        shutdown(STDOUT_FILENO, SHUT_WR);
-        close(STDOUT_FILENO);
-    }
-
-    //Closing SOCKET
-    shutdown(clientfd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
-    close(clientfd);
-    clients[n]=-1;
-
-    free(buf);
-}

@@ -1,5 +1,5 @@
 #include "server.h"
-#include "sqlite3.h"
+#include <sqlite3.h>
 #include <stdio.h>
 
 void initiate_db();
@@ -177,7 +177,7 @@ int getLatestEntryId(sqlite3 *db){
         sqlite3_finalize(stmt);
         return -1;
     }
-    sqlite3_close();
+    sqlite3_close(db);
 
     return latestId;
 }

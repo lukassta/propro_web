@@ -14,6 +14,10 @@ int callback(void *NotUsed, int argc, char **argv, char **azColName) {
     return 0;
 }
 
+int getLatestId(sqlite3 *db);
+
+void deleteEntryById(sqlite3 *db, int idToDelete);
+
 const char DATABASE[] = "src/backend/snipper.db";
 
 int main()
@@ -75,10 +79,11 @@ void route_post(int client_sock_fd, char *uri)
         char sql[256];
         char teamName[] = "Snipper";
         char title[] = "Test code";
+        char language[] = "HTML";
         char code[] = "<div>a</div>";
         char description[] = "Sitas kodas...";
 
-        sprintf(sql, "INSERT INTO Entries(TeamName, Title, Code, Description) VALUES('%s', '%s', '%s', '%s');", teamName, title, code, description);
+        sprintf(sql, "INSERT INTO Entries(TeamName, Title, Language, Code, Description) VALUES('%s', '%s', '%s', '%s', '%s');", teamName, title, language, code, description);
 
         int resultCode = sqlite3_exec(db, sql, callback, 0, &errorMessage);
 
@@ -115,7 +120,7 @@ void initiate_db()
         exit(EXIT_FAILURE);
     }
 
-    char *sql = "CREATE TABLE IF NOT EXISTS Entries(Id INTEGER PRIMARY KEY, TeamName TEXT, Title TEXT, Code TEXT, Description TEXT, Likes INTEGER DEFAULT 0, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP);";
+    char *sql = "CREATE TABLE IF NOT EXISTS Entries(Id INTEGER PRIMARY KEY, TeamName TEXT, Title TEXT, Language TEXT, Code TEXT, Description TEXT, Likes INTEGER DEFAULT 0, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP);";
     resultCode = sqlite3_exec(db, sql, 0, 0, &errorMessage);
 
     if (resultCode != SQLITE_OK) {
@@ -150,4 +155,44 @@ void render_index_html()
     fclose(fptr); 
 
     sqlite3_close(db);
+}
+
+int getLatestEntryId(sqlite3 *db){
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT Id FROM Entries ORDER BY Id DESC LIMIT 1;";
+    int latestId = 0;
+
+    int resultCode = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (resultCode != SQLITE_OK) {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+        return -1;
+    }
+
+    resultCode = sqlite3_step(stmt);
+    if (resultCode == SQLITE_ROW) {
+        latestId = sqlite3_column_int(stmt, 0);
+        sqlite3_finalize(stmt);
+    } else {
+        fprintf(stderr, "No entries found in the table.\n");
+        sqlite3_finalize(stmt);
+        return -1;
+    }
+    sqlite3_close();
+
+    return latestId;
+}
+
+void deleteEntryById(sqlite3 *db, int idToDelete){
+    char *error_message = 0;
+    char sql[256];
+
+    sprintf(sql, "DELETE FROM Entries WHERE Id = '%d';", idToDelete);
+
+    int resultCode = sqlite3_exec(db, sql, callback, 0, &error_message);
+
+    if (resultCode != SQLITE_OK){
+        fprintf(stderr, "Failed to delete entry: %s\n", sqlite3_errmsg(db));
+        sqlite3_free(error_message);
+        sqlite3_close(db);
+    }
 }

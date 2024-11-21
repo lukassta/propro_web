@@ -18,7 +18,7 @@ int getLatestEntryId(sqlite3 *db){
     int resultCode = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
     if (resultCode != SQLITE_OK) {
         fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
-        return 1;
+        return -1;
     }
 
     resultCode = sqlite3_step(stmt);

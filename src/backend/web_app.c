@@ -1,5 +1,5 @@
 #include "server.h"
-#include <sqlite3.h>
+#include "sqlite3.h"
 #include <stdio.h>
 
 void initiate_db();
@@ -13,6 +13,8 @@ void render_index_html();
 int callback(void *NotUsed, int argc, char **argv, char **azColName) {
     return 0;
 }
+
+const char DATABASE[] = "src/backend/snipper.db";
 
 int main()
 {
@@ -35,12 +37,29 @@ void route_get(int client_sock_fd, char *uri)
         char file_name[] = "./public/favicon.png";
         send_file(client_sock_fd, file_name);
     }
-    else
+    else if(!strcmp(uri, "/styles.css"))
+    {
+        send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type:text/css\n\n", 39, 0);
+        char file_name[] = "./src/frontend/styles.css";
+        send_file(client_sock_fd, file_name);
+    }
+    else if(!strcmp(uri, "/"))
+    {
+        send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type:text/html\n\n", 40, 0);
+        char file_name[] = "./src/frontend/index.html";
+        send_file(client_sock_fd, file_name);
+    }
+    else if(!strcmp(uri, "/test"))
+    {
+        send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type:text/html\n\n", 40, 0);
+        char file_name[] = "./src/frontend/test.html";
+        send_file(client_sock_fd, file_name);
+    }
+    else // Not found
     {
         send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type: text/html\n\n", 42, 0);
 
-        send(client_sock_fd, "<h1>BANANA</h1>\n", 14, 0);
-        send_file(client_sock_fd, "./src/frontend/test.html");
+        send(client_sock_fd, "<h1>404</h1>\n", 14, 0);
     }
 }
 
@@ -50,7 +69,7 @@ void route_post(int client_sock_fd, char *uri)
     {
         sqlite3 *db;
 
-        sqlite3_open("snipper.db", &db);
+        sqlite3_open(DATABASE, &db);
 
         char *errorMessage = 0;
         char sql[256];
@@ -87,7 +106,7 @@ void initiate_db()
     sqlite3 *db;
     char *errorMessage = 0;
 
-    int resultCode = sqlite3_open("snipper.db", &db);
+    int resultCode = sqlite3_open(DATABASE, &db);
 
     if(resultCode != SQLITE_OK)
     {
@@ -119,10 +138,10 @@ int file_write(void *NotUsed, int argc, char **argv, char **azColName) {
 
 void render_index_html()
 {
-    fptr = fopen("./src/frontend/index.html", "w");
+    fptr = fopen("./src/frontend/test.html", "w");
     sqlite3 *db;
 
-    sqlite3_open("snipper.db", &db);
+    sqlite3_open(DATABASE, &db);
 
     char *errorMessage = 0;
     char *sql = "SELECT * FROM Entries ORDER BY Id";

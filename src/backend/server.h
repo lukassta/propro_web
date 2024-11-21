@@ -42,8 +42,21 @@ void start_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *a
 
 void parse_request(int client_sock_fd)
 {
+    int result;
     char buffer[1024], *method, *uri, *prot, *temp;
-    recv(client_sock_fd, buffer, sizeof(buffer) - 1, 0);
+
+    result  = recv(client_sock_fd, buffer, sizeof(buffer) - 1, 0);
+
+    if(result < 0)
+    {
+        printf("Error\n");
+        return;
+    }
+    else if(result == 0)
+    {
+        printf("Connection closed\n");
+        return;
+    }
 
     printf("%s\n", buffer);
 
@@ -51,6 +64,11 @@ void parse_request(int client_sock_fd)
     uri = strtok(NULL, " \t");
     prot = strtok(NULL, " \t\r\n");
 
+    if(!method || !uri || !prot)
+    {
+        printf("Invalid request\n");
+        return;
+    }
     /*for(int i = 0; i < 14; ++i)*/
     /*{*/
     /*    temp = strtok(NULL, "\n");*/
@@ -60,13 +78,13 @@ void parse_request(int client_sock_fd)
 
     printf("%s %s\n\n", method, uri);
 
-    if(!strcmp(method, "POST"))
-    {
-        route_post(client_sock_fd, uri);
-    }
-    else
+    if(!strcmp(method, "GET"))
     {
         route_get(client_sock_fd, uri);
+    }
+    else if(!strcmp(method, "POST"))
+    {
+        route_post(client_sock_fd, uri);
     }
 }
 

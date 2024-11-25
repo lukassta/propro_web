@@ -180,7 +180,7 @@ void parse_request(SSL *client_ssl)
         {
             break;
         }
-    }čęėšŪŲĮŠsdf
+    }
 
     if(!strcmp(method, "GET"))
     {

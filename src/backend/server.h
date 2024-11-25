@@ -1,14 +1,32 @@
+#include <ctype.h>
 #include <netinet/in.h>
+#include <openssl/bio.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-
 #define PORT 8080
 
-void route_get(int client_sock_fd, char *uri);
-void route_post(int client_sock_fd, char *uri);
+typedef struct
+{
+    char *key;
+    char *value;
+}
+dict;
+
+void accept_request(int client_sock_fd, SSL_CTX *sslctx);
+void parse_request(SSL *client_ssl);
+void route_get(SSL *client_ssl, char *uri);
+void route_post(SSL *client_ssl, char *uri, dict *body);
+char *get_value_by_key(dict *dictionary, const char* name);
+void url_decode(char *src);
+
+void initialize_ssl();
+void destroy_ssl();
+void shutdown_ssl(SSL *client_ssl);
 
 void start_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *addrlen)
 {
@@ -38,14 +56,82 @@ void start_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *a
         perror("Listen failure");
         exit(EXIT_FAILURE);
     }
+
+    initialize_ssl();
 }
 
-void parse_request(int client_sock_fd)
+void constantly_accept_requests(int server_sock_fd, struct sockaddr_in address, socklen_t addrlen)
 {
-    int result;
-    char buffer[1024], *method, *uri, *prot, *temp;
+    SSL_CTX *sslctx;
+    int client_sock_fd, use_cert, use_prv;
 
-    result  = recv(client_sock_fd, buffer, sizeof(buffer) - 1, 0);
+    sslctx = SSL_CTX_new(TLS_server_method());
+    SSL_CTX_set_options(sslctx, SSL_OP_SINGLE_DH_USE);
+
+    use_cert = SSL_CTX_use_certificate_file(sslctx, "cert.pem" , SSL_FILETYPE_PEM);
+    use_prv = SSL_CTX_use_PrivateKey_file(sslctx, "key.pem", SSL_FILETYPE_PEM);
+
+    if(use_cert < 1|| use_prv < 1)
+    {
+        perror("Certificate error");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Server started %shttps://127.0.0.1:%d%s\n\n", "\033[92m", PORT, "\033[0m");
+
+    while(1)
+    {
+        if((client_sock_fd = accept(server_sock_fd, (struct sockaddr*)&address, &addrlen)) < 0) {
+            perror("Accept failure");
+            exit(EXIT_FAILURE);
+        }
+
+        accept_request(client_sock_fd, sslctx);
+
+        close(client_sock_fd);
+    }
+}
+
+void accept_request(int client_sock_fd, SSL_CTX *sslctx)
+{
+    SSL *client_ssl;
+    int ssl_err;
+
+    client_ssl = SSL_new(sslctx);
+    SSL_set_fd(client_ssl, client_sock_fd);
+    ssl_err = SSL_accept(client_ssl);
+
+    if(ssl_err <= 0)
+    {
+        shutdown_ssl(client_ssl);
+        printf("SSL failed %d\n", SSL_get_error(client_ssl, ssl_err));
+    }
+    else
+    {
+        parse_request(client_ssl);
+    }
+}
+
+void parse_request(SSL *client_ssl)
+{
+    int result, b, payload_size;
+    char buffer[1024], *method, *uri, *prot, *temp_ptr, *key_ptr, *value_ptr, *payload_ptr;
+    static dict req_headers[17] = {};
+    static dict body[20] = {};
+
+    for(int i = 0; i < 17; ++i)
+    {
+        req_headers[i].key = 0;
+        req_headers[i].value = 0;
+    }
+
+    for(int i = 0; i < 20; ++i)
+    {
+        body[i].key = 0;
+        body[i].value = 0;
+    }
+
+    result = SSL_read(client_ssl, buffer, sizeof(buffer) - 1);
 
     if(result < 0)
     {
@@ -58,8 +144,6 @@ void parse_request(int client_sock_fd)
         return;
     }
 
-    printf("%s\n", buffer);
-
     method = strtok(buffer,  " \t\r\n");
     uri = strtok(NULL, " \t");
     prot = strtok(NULL, " \t\r\n");
@@ -69,47 +153,96 @@ void parse_request(int client_sock_fd)
         printf("Invalid request\n");
         return;
     }
-    /*for(int i = 0; i < 14; ++i)*/
-    /*{*/
-    /*    temp = strtok(NULL, "\n");*/
-    /*    printf("%s\n", temp);*/
-    /*}*/
 
+    printf("%s%s %s%s\n", "\033[92m", method, "\033[0m", uri);
 
-    printf("%s %s\n\n", method, uri);
+    for(int i = 0; i < 17; ++i)
+    {
+        key_ptr = strtok(NULL, "\r\n: \t");
+        if(!key_ptr)
+        {
+             break;
+        }
+
+        value_ptr = strtok(NULL, "\r\n");
+        while(*value_ptr && *value_ptr == ' ')
+        {
+            value_ptr++;
+        }
+
+        req_headers[i].key  = key_ptr;
+        req_headers[i].value = value_ptr;
+        printf("[H] %s: %s\n", key_ptr, value_ptr);
+
+        temp_ptr = value_ptr + strlen(value_ptr) + 1;
+
+        if(temp_ptr[1] == '\r' && temp_ptr[2] == '\n')
+        {
+            break;
+        }
+    }čęėšŪŲĮŠsdf
 
     if(!strcmp(method, "GET"))
     {
-        route_get(client_sock_fd, uri);
+        route_get(client_ssl, uri);
     }
     else if(!strcmp(method, "POST"))
     {
-        route_post(client_sock_fd, uri);
-    }
-}
+        temp_ptr+=3;
 
-void accept_requests_server(int server_sock_fd, struct sockaddr_in address, socklen_t addrlen)
-{
-    int client_sock_fd;
+        payload_ptr = temp_ptr;
 
-    printf("Server started %shttp://127.0.0.1:%d%s\n\n", "\033[92m", PORT, "\033[0m");
+        payload_size = atoi(get_value_by_key(req_headers, "Content-Length"));
+        payload_ptr[payload_size] = 0;
 
-    while(1)
-    {
-        if((client_sock_fd = accept(server_sock_fd, (struct sockaddr*)&address, &addrlen)) < 0) {
-            perror("Accept failure");
-            exit(EXIT_FAILURE);
+        for(int i = 0; i < 20; ++i)
+        {
+            key_ptr = strtok(NULL, "=");
+            if(!key_ptr || payload_ptr + payload_size <= key_ptr)
+            {
+                break;
+            }
+            if(i == 0)
+            {
+                key_ptr += 3;
+            }
+            body[i].key = key_ptr;
+
+            value_ptr = strtok(NULL, "&\n\0");
+            if(!value_ptr)
+            {
+                break;
+            }
+            url_decode(value_ptr);
+            body[i].value = value_ptr;
+
+            printf("[B] %s: %s\n", key_ptr, get_value_by_key(body, key_ptr));
         }
 
-        parse_request(client_sock_fd);
-
-        close(client_sock_fd);
+        route_post(client_ssl, uri, body);
     }
+    printf("\n");
 }
 
-void send_file(int client_sock_fd, char *file_name)
+char *get_value_by_key(dict *dictionary, const char* target_key)
 {
-    int file_buff_size = 10240;
+    dict *pair = dictionary;
+
+    while(pair->key)
+    {
+        if(strcmp(pair->key, target_key) == 0)
+        {
+            return pair->value;
+        }
+        pair++;
+    }
+
+    return NULL;
+}
+
+void send_file(SSL *client_ssl, char *file_name)
+{
+    int file_buff_size = 16384;
     char file_buff[file_buff_size];
     FILE *ptr_file;
     size_t bytes_read;
@@ -121,7 +254,75 @@ void send_file(int client_sock_fd, char *file_name)
 
     while((bytes_read = fread(file_buff, 1, file_buff_size, ptr_file )) > 0)
     {
-        send(client_sock_fd, file_buff, bytes_read, 0);
+        SSL_write(client_ssl, file_buff, bytes_read);
     }
 }
 
+void initialize_ssl()
+{
+    SSL_load_error_strings();
+    SSL_library_init();
+    OpenSSL_add_all_algorithms();
+}
+
+void destroy_ssl()
+{
+    ERR_free_strings();
+    EVP_cleanup();
+}
+
+void shutdown_ssl(SSL *client_ssl)
+{
+    SSL_shutdown(client_ssl);
+    SSL_free(client_ssl);
+}
+
+void url_decode(char *src)
+{
+    char a, b, *dst = src;
+
+    while(*src)
+    {
+        if((*src == '%') && ((a = src[1]) && (b = src[2])) && (isxdigit(a) && isxdigit(b)))
+        {
+            if('a' <= a)
+            {
+                a -= 'a' - 'A';
+            }
+            if('A' <= a)
+            {
+                a -= 'A' - 10;
+            }
+            else
+            {
+                a -= '0';
+            }
+
+            if('a' <= b)
+            {
+                b -= 'a'-'A';
+            }
+            if('A' <= b)
+            {
+                b -= ('A' - 10);
+            }
+            else
+            {
+                b -= '0';
+            }
+            // Writing a hex value of char to destination
+            *dst++ = 16*a + b;
+            src += 3;
+        }
+        else if(*src == '+')
+        {
+            *dst++ = ' ';
+            ++src;
+        }
+        else
+        {
+            *dst++ = *src++;
+        }
+    }
+    *dst++ = '\0';
+}

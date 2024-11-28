@@ -39,31 +39,31 @@ void route_get(SSL *client_ssl, char *uri)
 {
     if(!strcmp(uri, "/favicon.png"))
     {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:image/png\r\n\r\n", 40);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:image/png\r\n\r\n", 42);
         char file_name[] = "./public/favicon.png";
         send_file(client_ssl, file_name);
     }
     else if(!strcmp(uri, "/styles.css"))
     {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 39);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
         char file_name[] = "./src/frontend/styles.css";
         send_file(client_ssl, file_name);
     }
     else if(!strcmp(uri, "/"))
     {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 40);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
         char file_name[] = "./src/frontend/index.html";
         send_file(client_ssl, file_name);
     }
     else if(!strcmp(uri, "/test"))
     {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 40);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
         char file_name[] = "./src/frontend/test.html";
         send_file(client_ssl, file_name);
     }
     else // Not found
     {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type: text/html\r\n\r\n", 42);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type: text/html\r\n\r\n", 43);
 
         SSL_write(client_ssl, "<h1>404</h1>\n", 14);
     }
@@ -71,7 +71,7 @@ void route_get(SSL *client_ssl, char *uri)
 
 void bad_request_body(SSL *client_ssl)
 {
-    SSL_write(client_ssl, "HTTP/1.1 400 Bad request\r\n\r\n", 25);
+    SSL_write(client_ssl, "HTTP/1.1 400 Bad request\r\n\r\n", 28);
 }
 
 void route_post(SSL *client_ssl, char *uri, dict *body)
@@ -109,13 +109,13 @@ void route_post(SSL *client_ssl, char *uri, dict *body)
 
         sqlite3_close(db);
 
-        SSL_write(client_ssl, "HTTP/1.1 204 No content\r\n\r\n", 25);
+        SSL_write(client_ssl, "HTTP/1.1 204 No content\r\n\r\n", 27);
 
         render_index_html();
     }
     else
     {
-        SSL_write(client_ssl, "HTTP/1.1 404 Not Found\r\n\r\n", 24);
+        SSL_write(client_ssl, "HTTP/1.1 404 Not Found\r\n\r\n", 26);
     }
 }
 

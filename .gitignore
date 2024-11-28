@@ -4,3 +4,6 @@
 *.db
 *.exe
 *.pem
+*.crt
+*.key
+*.out

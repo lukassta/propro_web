@@ -124,10 +124,10 @@ void parse_request(SSL *client_ssl)
 {
     int result, ssl_err, b, payload_size;
     char buffer[1024], *method, *uri, *prot, *temp_ptr, *key_ptr, *value_ptr, *payload_ptr;
-    static dict req_headers[17] = {};
+    static dict req_headers[30] = {};
     static dict body[20] = {};
 
-    for(int i = 0; i < 17; ++i)
+    for(int i = 0; i < 30; ++i)
     {
         req_headers[i].key = 0;
         req_headers[i].value = 0;
@@ -165,7 +165,7 @@ void parse_request(SSL *client_ssl)
 
     printf("%s%s %s%s\n", "\033[92m", method, "\033[0m", uri);
 
-    for(int i = 0; i < 17; ++i)
+    for(int i = 0; i < 30; ++i)
     {
         key_ptr = strtok(NULL, "\r\n: \t");
         if(!key_ptr)
@@ -185,7 +185,7 @@ void parse_request(SSL *client_ssl)
 
         temp_ptr = value_ptr + strlen(value_ptr) + 1;
 
-        if(temp_ptr[1] == '\r' && temp_ptr[2] == '\n')
+        if(temp_ptr[0] == '\n' && temp_ptr[1] == '\r' && temp_ptr[2] == '\n')
         {
             break;
         }
@@ -197,9 +197,7 @@ void parse_request(SSL *client_ssl)
     }
     else if(!strcmp(method, "POST"))
     {
-        temp_ptr+=3;
-
-        payload_ptr = temp_ptr;
+        payload_ptr = strtok(NULL, "\n") + 2;
 
         payload_size = atoi(get_value_by_key(req_headers, "Content-Length"));
         payload_ptr[payload_size] = 0;
@@ -210,10 +208,6 @@ void parse_request(SSL *client_ssl)
             if(!key_ptr || payload_ptr + payload_size <= key_ptr)
             {
                 break;
-            }
-            if(i == 0)
-            {
-                key_ptr += 3;
             }
             body[i].key = key_ptr;
 

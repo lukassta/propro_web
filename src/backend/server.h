@@ -38,10 +38,12 @@ void start_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *a
         exit(EXIT_FAILURE);
     }
 
-    if(setsockopt(*server_sock_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+    if(setsockopt(*server_sock_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
+    {
         perror("Setsockopt failure");
         exit(EXIT_FAILURE);
     }
+
     address -> sin_family = AF_INET;
     address -> sin_addr.s_addr = INADDR_ANY;
     address -> sin_port = htons(PORT);
@@ -81,12 +83,16 @@ void constantly_accept_requests(int server_sock_fd, struct sockaddr_in address, 
 
     while(1)
     {
-        if((client_sock_fd = accept(server_sock_fd, (struct sockaddr*)&address, &addrlen)) < 0) {
+        if((client_sock_fd = accept(server_sock_fd, (struct sockaddr*)&address, &addrlen)) < 0)
+        {
             perror("Accept failure");
             exit(EXIT_FAILURE);
         }
 
-        accept_request(client_sock_fd, sslctx);
+        if(fork() == 0)
+        {
+            accept_request(client_sock_fd, sslctx);
+        }
 
         close(client_sock_fd);
     }
@@ -103,18 +109,19 @@ void accept_request(int client_sock_fd, SSL_CTX *sslctx)
 
     if(ssl_err <= 0)
     {
-        shutdown_ssl(client_ssl);
         printf("SSL failed %d\n", SSL_get_error(client_ssl, ssl_err));
     }
     else
     {
         parse_request(client_ssl);
     }
+
+    shutdown_ssl(client_ssl);
 }
 
 void parse_request(SSL *client_ssl)
 {
-    int result, b, payload_size;
+    int result, ssl_err, b, payload_size;
     char buffer[1024], *method, *uri, *prot, *temp_ptr, *key_ptr, *value_ptr, *payload_ptr;
     static dict req_headers[17] = {};
     static dict body[20] = {};
@@ -135,7 +142,8 @@ void parse_request(SSL *client_ssl)
 
     if(result < 0)
     {
-        printf("Error\n");
+        ssl_err = SSL_get_error(client_ssl, result);
+        printf("SSL failed %d\n", ssl_err);
         return;
     }
     else if(result == 0)
@@ -247,7 +255,8 @@ void send_file(SSL *client_ssl, char *file_name)
     FILE *ptr_file;
     size_t bytes_read;
 
-    if((ptr_file = fopen(file_name, "rb")) == NULL){
+    if((ptr_file = fopen(file_name, "rb")) == NULL)
+    {
         perror("Cant open file");
         exit(EXIT_FAILURE);
     }

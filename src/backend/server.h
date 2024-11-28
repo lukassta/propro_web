@@ -92,9 +92,9 @@ void constantly_accept_requests(int server_sock_fd, struct sockaddr_in address, 
         if(fork() == 0)
         {
             accept_request(client_sock_fd, sslctx);
+            exit(0);
         }
 
-        close(client_sock_fd);
     }
 }
 
@@ -117,6 +117,7 @@ void accept_request(int client_sock_fd, SSL_CTX *sslctx)
     }
 
     shutdown_ssl(client_ssl);
+    close(client_sock_fd);
 }
 
 void parse_request(SSL *client_ssl)

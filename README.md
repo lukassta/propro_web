@@ -3,7 +3,7 @@ This is a univesrity project. The target of this project is to create a server a
 To start the server  first compile file and then run it (at least on linux)
 ## Usage
 ### Setup
-1. Install dependecies: sqlite3 ssl crypto
+1. Install dependecies for c (packages depend on operating systam): sqlite3 ssl crypto
 
 2. (Linux):
 ```

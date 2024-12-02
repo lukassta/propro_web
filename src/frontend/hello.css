@@ -1,100 +1,130 @@
-
-@keyframes fadeIn {
-    0%{
-        opacity: 0;
-    }
-    100%{
-        opacity: 1;
-    }
-}
-@keyframes flyInFromBottom{
-    0%{
-        transform: translateY(100px);
-        opacity: 0;
-    }
-    100%{
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-.fade-in-main{
-    animation: fadeIn 2s ease-in forwards;
-}
-.fade-in-text{
-    animation: fadeIn 3s ease-in forwards;
-}
-.center-text{
-    text-align: center;
-    color: green;
-}
 body{
     background-color: black;
 }
-.button{
-    display: inline-block;
-    background-color: rgb(
-@keyframes fadeIn {
-    0%{
-        opacity: 0;
-    }
-    100%{
-        opacity: 1;
-    }
-}
-.fade-in-main{
-    animation: fadeIn 2s ease-in forwards;
-}
-.fade-in-text{
-    animation: fadeIn 3s ease-in forwards;
-}
-.center-text{
+.logo {
+    font-size: 50px;
+    font-weight: bold; 
+    color: green; 
+    opacity: 0; 
+    animation: fadeIn 1s ease-in-out forwards; 
     text-align: center;
-    color: green;
+    font-family: 'Roboto', sans-serif;
+  }
+@keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
 }
-body{
-    background-color: black;
-}
-.button{
-    display: inline-block;
-    background-color: black;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 10px;
-    border-color: green;
-    font-size: 16px;
-    margin-top: 20px;
-    transition: background-color 0.3 ease;
-
+.line {
+    width: 80%; 
+    height: 2px; 
+    border: none; 
+    background-color: green; 
+    margin: 10px auto; 
+    margin-top: 12px; 
     opacity: 0;
-    transform: translateY(100px);
-    animation: flyInFromBottom 1s ease-out forwads;
-    animation-delay: 3s;
-}
-.button:hover{
-    background-color: grey;
-});
-    color: white;
-    padding: 10px 20px;
-    border-radius: 10px;
-    border-color: green;
-    font-size: 16px;
-    margin-top: 20px;
-    transition: background-color 0.3 ease;
-
-    opacity: 0;
-    transform: translateY(100px);
-    animation: flyInFromBottom 1s ease-out forwards;
-    animation-delay: 3s;
-}
-.button:hover{
-    background-color: grey;
-}
-section{
-    min-height: 90vw;
-}
-footer{
+    animation: fadeIn 1s 0.5s ease-in-out forwards; 
+  }
+.description {
+    padding: 0px 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    animation: fadeIn 1s ease-in-out forwards; 
+  }
+  .description p {
+    font-size: 30px;
+    margin-bottom: 20px;
     color: green;
+  }
+  
+  .description p bold {
+    font-weight: bold;
+  }
+
+  .buttoms{
+    display: flex;
+    gap: 20px;
+    margin-top: 30px;
+    justify-content: center;
+  }
+  .box {
+    background-color: black; 
+    color: green;
+    padding: 30px;
+    width: 500px;
+    height: 200px;
+    text-align: center;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    border: 5px solid green; 
+    font-size: 30px;
+  }
+  .box:hover {
+    transform: scale(0.95);  
+  }
+  a {
+    text-decoration: none;
+    color: green;
+  }
+
+/* Dropdown Menu Styling */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  list-style-type: none;
+  position: absolute;
+  top: 100%; /* Position below the parent link */
+  left: 0;
+  background-color: green;
+  width: 100%;
+  opacity: 0;
+  visibility: hidden; /* Initially hidden */
+  padding: 5px 0;
+  margin-top: 10px;
+  transition: opacity 0.3s ease, visibility 0s 0.3s; /* Smooth fade-in and out */
+}
+
+.dropdown-menu li {
+  padding: 30px 50px;
+  background-color: black;
+  font-size: 20px;
+}
+
+.dropdown-menu li a {
+  color: white;
+  text-decoration: none;
+}
+
+.dropdown-menu li a:hover {
+  background-color: #555;
+}
+
+/* Show Dropdown Menu on Hover */
+.dropdown:hover .dropdown-menu {
+  opacity: 1;
+  visibility: visible; /* Show the dropdown */
+  transition: opacity 0.3s ease, visibility 0s 0s; /* Show instantly */
+}
+
+.dropdown:hover {
+  pointer-events: auto; /* Allow interaction with the dropdown */
+}
+
+.dropdown-menu {
+  pointer-events: auto; /* Allow interaction with menu items */
 }
 
 
+
+
+  
+
+  
 

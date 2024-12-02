@@ -14,11 +14,9 @@
     <main>
         <section class="upload-form">
             <form action="/submit-snippet" method="POST" class="form-container">
-                <label for="title">Name of the Team/User</label>
-                <textarea id="description" name="description" rows="4" placeholder="Enter Name of the Team/User" required></textarea>
 
                 <label for="title">Snippet Name</label>
-                <textarea id="description" name="description" rows="4" placeholder="Enter the Snippet name" required></textarea>
+                <textarea id="title" name="title" rows="4" placeholder="Enter the Snippet name" required></textarea>
 
                 <label for="description">Snippet Description</label>
                 <textarea id="description" name="description" rows="4" placeholder="Describe your snippet" required></textarea>
@@ -36,6 +34,8 @@
                     <option value="css">CSS</option>
                 </select>
 
+                <label for="team_name">Name of the Team/User</label>
+                <textarea id="team_name" name="team_name" rows="4" placeholder="Enter Name of the Team/User" required></textarea>
 
                 <button type="submit" class="submit-btn">Upload Snippet</button>
             </form>

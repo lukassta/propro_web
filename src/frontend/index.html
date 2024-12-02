@@ -1,23 +1,36 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <title>Page Title</title>
-  <link rel="icon" type="image/x-icon" href="/favicon.png">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+<html lang = "en">
+    <head>
+        <title>Front page</title>
+        <link rel="stylesheet" href="index.css">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <body>
+            <h1 class="logo">SnippetOverFlow</h1>
+            <div class="line"></div>
+        </body>
 
-<h1>This is a Heading</h1>
-<p>This is a paragraph.</p>
-<form action="/create-post" method="POST">
-  <label for="fname">First name:</label><br>
-  <input type="text" id="fname" name="fname" value="John"><br>
-  <label for="lname">Last name:</label><br>
-  <input type="text" id="lname" name="lname" value="Doe"><br><br>
-  <input type="submit" value="Submit">
-</form>  
-<p>The content of the body element is displayed in the browser window.</p>
-<p>The content of the title element is displayed in the browser tab, in favorites and in search-engine results.</p>
+        <main>
+            <section class="description">
+                <p>Welcome to <bold>SnippetOverFlow</bold>. This webiste designed to share code snippets and help students to learn. Feel free to use and uplode code segments!</p>
+            </section>
 
-</body>
+            <section class="buttoms">
+                <div class="box dropdown">
+                    <h2>Look up Snippets</h2>
+                    <ul class="dropdown-menu">
+                        <li><a href="youtube.com"></a>C++</li>
+                        <li><a href="youtube.com"></a>PYTHON</li>
+                        <li><a href="youtube.com"></a>HTML</li>
+                    </ul>
+                </div>
+                <div class="box">
+                    <a href="/upload">
+                        <h2>Upload Snippets</h2>
+                    </a>
+                </div>
+            </section>
+          
+        </main>
+    </head>
 </html>

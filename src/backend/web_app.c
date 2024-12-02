@@ -1,12 +1,11 @@
 #include "server.h"
+#include <openssl/ssl.h>
 #include <sqlite3.h>
 #include <stdio.h>
 
 void initiate_db();
 
 void initiate_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *addrlen);
-
-void send_file(int client_sock_fd, char *file_name);
 
 void render_index_html();
 
@@ -29,61 +28,98 @@ int main()
     initiate_db();
     start_server(&server_sock_fd, &address, &addrlen);
 
-    accept_requests_server(server_sock_fd, address, addrlen);
+    constantly_accept_requests(server_sock_fd, address, addrlen);
+
     return 0;
 }
 
-void route_get(int client_sock_fd, char *uri)
+void route_get(SSL *client_ssl, char *uri)
 {
     if(!strcmp(uri, "/favicon.png"))
     {
-        send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type:image/png\n\n", 40, 0);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:image/png\r\n\r\n", 42);
         char file_name[] = "./public/favicon.png";
-        send_file(client_sock_fd, file_name);
+        send_file(client_ssl, file_name);
     }
     else if(!strcmp(uri, "/styles.css"))
     {
-        send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type:text/css\n\n", 39, 0);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
         char file_name[] = "./src/frontend/styles.css";
-        send_file(client_sock_fd, file_name);
+        send_file(client_ssl, file_name);
+    }
+    else if(!strcmp(uri, "/index.css"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
+        char file_name[] = "./src/frontend/index.css";
+        send_file(client_ssl, file_name);
+    }
+    else if(!strcmp(uri, "/upload.css"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
+        char file_name[] = "./src/frontend/upload.css";
+        send_file(client_ssl, file_name);
+    }
+    else if(!strcmp(uri, "/snippets.css"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
+        char file_name[] = "./src/frontend/snippets.css";
+        send_file(client_ssl, file_name);
     }
     else if(!strcmp(uri, "/"))
     {
-        send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type:text/html\n\n", 40, 0);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
         char file_name[] = "./src/frontend/index.html";
-        send_file(client_sock_fd, file_name);
+        send_file(client_ssl, file_name);
     }
-    else if(!strcmp(uri, "/test"))
+    else if(!strcmp(uri, "/upload"))
     {
-        send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type:text/html\n\n", 40, 0);
-        char file_name[] = "./src/frontend/test.html";
-        send_file(client_sock_fd, file_name);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
+        char file_name[] = "./src/frontend/upload.html";
+        send_file(client_ssl, file_name);
+    }
+    else if(!strcmp(uri, "/snippets"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
+        char file_name[] = "./src/frontend/snippets.html";
+        send_file(client_ssl, file_name);
     }
     else // Not found
     {
-        send(client_sock_fd, "HTTP/1.1 200 OK\nContent-Type: text/html\n\n", 42, 0);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
 
-        send(client_sock_fd, "<h1>404</h1>\n", 14, 0);
+        SSL_write(client_ssl, "<h1>404</h1>\n", 14);
     }
 }
 
-void route_post(int client_sock_fd, char *uri)
+void bad_request_body(SSL *client_ssl)
 {
-    if(!strcmp(uri, "/create-post"))
+    SSL_write(client_ssl, "HTTP/1.1 400 Bad request\r\n\r\n", 28);
+}
+
+void route_post(SSL *client_ssl, char *uri, dict *body)
+{
+    if(!strcmp(uri, "/submit-snippet"))
     {
         sqlite3 *db;
 
         sqlite3_open(DATABASE, &db);
 
         char *errorMessage = 0;
-        char sql[256];
-        char teamName[] = "Snipper";
-        char title[] = "Test code";
-        char language[] = "HTML";
-        char code[] = "<div>a</div>";
-        char description[] = "Sitas kodas...";
+        char sql[2048];
 
-        sprintf(sql, "INSERT INTO Entries(TeamName, Title, Language, Code, Description) VALUES('%s', '%s', '%s', '%s', '%s');", teamName, title, language, code, description);
+        char *team_name = get_value_by_key(body, "team_name");
+        char *title = get_value_by_key(body, "title");
+        char *language = get_value_by_key(body, "language");
+        char *code = get_value_by_key(body, "code");
+        char *description = get_value_by_key(body, "description");
+
+        if(!team_name || !title || !language || !code || !description)
+        {
+            bad_request_body(client_ssl);
+            return;
+        }
+
+        sprintf(sql, "INSERT INTO Entries(TeamName, Title, Language, Code, Description) VALUES('%s', '%s', '%s', '%s', '%s');", team_name, title, language, code, description);
 
         int resultCode = sqlite3_exec(db, sql, callback, 0, &errorMessage);
 
@@ -96,13 +132,13 @@ void route_post(int client_sock_fd, char *uri)
 
         sqlite3_close(db);
 
-        send(client_sock_fd, "HTTP/1.1 204 No content\n\n", 25, 0);
+        SSL_write(client_ssl, "HTTP/1.1 204 No content\r\n\r\n", 27);
 
         render_index_html();
     }
     else
     {
-        send(client_sock_fd, "HTTP/1.1 404 Not Found\n\n", 24, 0);
+        SSL_write(client_ssl, "HTTP/1.1 404 Not Found\r\n\r\n", 26);
     }
 }
 
@@ -143,7 +179,7 @@ int file_write(void *NotUsed, int argc, char **argv, char **azColName) {
 
 void render_index_html()
 {
-    fptr = fopen("./src/frontend/test.html", "w");
+    fptr = fopen("./src/frontend/snippets.html", "w");
     sqlite3 *db;
 
     sqlite3_open(DATABASE, &db);

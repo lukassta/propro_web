@@ -7,15 +7,15 @@ void initiate_db();
 
 void initiate_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *addrlen);
 
-void render_index_html();
-
-int callback(void *NotUsed, int argc, char **argv, char **azColName) {
-    return 0;
-}
+int callback(void *NotUsed, int argc, char **argv, char **azColName);
 
 int getLatestId(sqlite3 *db);
 
 void deleteEntryById(sqlite3 *db, int idToDelete);
+
+void render_snippets_page(SSL *client_ssl);
+
+int write_snippet_element(void *client_ssl_p, int argc, char **argv, char **azColName);
 
 const char DATABASE[] = "src/backend/snipper.db";
 
@@ -38,50 +38,50 @@ void route_get(SSL *client_ssl, char *uri)
     if(!strcmp(uri, "/favicon.png"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:image/png\r\n\r\n", 42);
-        char file_name[] = "./public/favicon.png";
-        send_file(client_ssl, file_name);
+
+        send_file(client_ssl, "./public/favicon.png");
     }
     else if(!strcmp(uri, "/styles.css"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
-        char file_name[] = "./src/frontend/styles.css";
-        send_file(client_ssl, file_name);
+
+        send_file(client_ssl, "./src/frontend/styles.css");
     }
     else if(!strcmp(uri, "/index.css"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
-        char file_name[] = "./src/frontend/index.css";
-        send_file(client_ssl, file_name);
+
+        send_file(client_ssl, "./src/frontend/index.css");
     }
     else if(!strcmp(uri, "/upload.css"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
-        char file_name[] = "./src/frontend/upload.css";
-        send_file(client_ssl, file_name);
+
+        send_file(client_ssl, "./src/frontend/upload.css");
     }
     else if(!strcmp(uri, "/snippets.css"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
-        char file_name[] = "./src/frontend/snippets.css";
-        send_file(client_ssl, file_name);
+
+        send_file(client_ssl, "./src/frontend/snippets.css");
     }
     else if(!strcmp(uri, "/"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
-        char file_name[] = "./src/frontend/index.html";
-        send_file(client_ssl, file_name);
+
+        send_file(client_ssl, "./src/frontend/index.html");
     }
     else if(!strcmp(uri, "/upload"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
-        char file_name[] = "./src/frontend/upload.html";
-        send_file(client_ssl, file_name);
+
+        send_file(client_ssl, "./src/frontend/upload.html");
     }
     else if(!strcmp(uri, "/snippets"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
-        char file_name[] = "./src/frontend/snippets.html";
-        send_file(client_ssl, file_name);
+
+        render_snippets_page(client_ssl);
     }
     else // Not found
     {
@@ -133,8 +133,6 @@ void route_post(SSL *client_ssl, char *uri, dict *body)
         sqlite3_close(db);
 
         SSL_write(client_ssl, "HTTP/1.1 204 No content\r\n\r\n", 27);
-
-        render_index_html();
     }
     else
     {
@@ -168,32 +166,36 @@ void initiate_db()
     sqlite3_close(db);
 }
 
-FILE *fptr;
-int file_write(void *NotUsed, int argc, char **argv, char **azColName) {
-    for (int i = 0; i < argc; i++) {
-        fprintf(fptr, "<div>%s</div>\n", argv[i]);
-    }
-
-    return 0;
-}
-
-void render_index_html()
+void render_snippets_page(SSL *client_ssl)
 {
-    fptr = fopen("./src/frontend/snippets.html", "w");
     sqlite3 *db;
+
+    send_file(client_ssl, "./src/frontend/snippets_beg.html");
 
     sqlite3_open(DATABASE, &db);
 
     char *errorMessage = 0;
     char *sql = "SELECT * FROM Entries ORDER BY Id";
-    sqlite3_exec(db, sql, file_write, 0, &errorMessage);
-
-    fclose(fptr); 
+    sqlite3_exec(db, sql, write_snippet_element, client_ssl, &errorMessage);
 
     sqlite3_close(db);
+
+    send_file(client_ssl, "./src/frontend/snippets_end.html");
 }
 
-int getLatestEntryId(sqlite3 *db){
+int write_snippet_element(void *client_ssl, int argc, char **argv, char **azColName)
+{
+    char element[2048];
+
+    sprintf(element, "<div><h3>%s</h3><p>%s</p><p>%s</p><p>%s</p><p>%s</p></div>", argv[2], argv[5], argv[4], argv[3], argv[1]);
+
+    SSL_write(client_ssl, element, strlen(element));
+
+    return 0;
+}
+
+int getLatestEntryId(sqlite3 *db)
+{
     sqlite3_stmt *stmt;
     const char *sql = "SELECT Id FROM Entries ORDER BY Id DESC LIMIT 1;";
     int latestId = 0;
@@ -218,7 +220,8 @@ int getLatestEntryId(sqlite3 *db){
     return latestId;
 }
 
-void deleteEntryById(sqlite3 *db, int idToDelete){
+void deleteEntryById(sqlite3 *db, int idToDelete)
+{
     char *error_message = 0;
     char sql[256];
 
@@ -231,4 +234,9 @@ void deleteEntryById(sqlite3 *db, int idToDelete){
         sqlite3_free(error_message);
         sqlite3_close(db);
     }
+}
+
+int callback(void *NotUsed, int argc, char **argv, char **azColName)
+{
+    return 0;
 }

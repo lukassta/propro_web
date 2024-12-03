@@ -41,6 +41,12 @@ void route_get(SSL *client_ssl, char *uri)
 
         send_file(client_ssl, "./public/favicon.png");
     }
+    else if(!strcmp(uri, "/snipper_logo.png"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
+
+        send_file(client_ssl, "./public/snipper_logo.png");
+    }
     else if(!strcmp(uri, "/styles.css"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
@@ -82,6 +88,12 @@ void route_get(SSL *client_ssl, char *uri)
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
 
         render_snippets_page(client_ssl);
+    }
+    else if(!strcmp(uri, "/about"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
+
+        send_file(client_ssl, "./src/frontend/about.html");
     }
     else // Not found
     {

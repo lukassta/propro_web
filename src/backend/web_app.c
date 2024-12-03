@@ -19,6 +19,12 @@ int write_snippet_element(void *client_ssl_p, int argc, char **argv, char **azCo
 
 const char DATABASE[] = "src/backend/snipper.db";
 
+struct TwoPointers
+{
+    void *pointer_1;
+    void *pointer_2;
+};
+
 int main()
 {
     struct sockaddr_in address;
@@ -180,26 +186,42 @@ void initiate_db()
 
 void render_snippets_page(SSL *client_ssl)
 {
+    char *sql = "SELECT * FROM Entries ORDER BY Id", *errorMessage = 0;
     sqlite3 *db;
+    FILE *snippet_template_ptr;
+    struct TwoPointers pointers;
 
-    send_file(client_ssl, "./src/frontend/snippets_beg.html");
+    pointers.pointer_1 = client_ssl;
+    snippet_template_ptr = fopen("./src/frontend/snippet_template.html", "rb");
+    pointers.pointer_2 = snippet_template_ptr;
 
     sqlite3_open(DATABASE, &db);
 
-    char *errorMessage = 0;
-    char *sql = "SELECT * FROM Entries ORDER BY Id";
-    sqlite3_exec(db, sql, write_snippet_element, client_ssl, &errorMessage);
+    send_file(client_ssl, "./src/frontend/snippets_beg.html");
+
+    sqlite3_exec(db, sql, write_snippet_element, &pointers, &errorMessage);
+
+    send_file(client_ssl, "./src/frontend/snippets_end.html");
 
     sqlite3_close(db);
 
-    send_file(client_ssl, "./src/frontend/snippets_end.html");
+    fclose(snippet_template_ptr);
 }
 
-int write_snippet_element(void *client_ssl, int argc, char **argv, char **azColName)
+int write_snippet_element(void *pointers_ptr, int argc, char **argv, char **azColName)
 {
-    char element[2048];
+    char element[2048], buffer[2048];
+    struct TwoPointers *pointers;
+    SSL *client_ssl;
+    FILE *snippet_template_ptr;
 
-    sprintf(element, "<div><h3>%s</h3><p>%s</p><p>%s</p><p>%s</p><p>%s</p></div>", argv[2], argv[5], argv[4], argv[3], argv[1]);
+    pointers = pointers_ptr;
+    client_ssl = pointers->pointer_1;
+    snippet_template_ptr = pointers->pointer_2;
+
+    fread(buffer, 1, 2048, snippet_template_ptr);
+
+    sprintf(element, buffer, argv[2], argv[5], argv[4], argv[3], argv[1]);
 
     SSL_write(client_ssl, element, strlen(element));
 

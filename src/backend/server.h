@@ -247,19 +247,21 @@ void send_file(SSL *client_ssl, char *file_name)
 {
     int file_buff_size = 16384;
     char file_buff[file_buff_size];
-    FILE *ptr_file;
+    FILE *file_ptr;
     size_t bytes_read;
 
-    if((ptr_file = fopen(file_name, "rb")) == NULL)
+    if((file_ptr = fopen(file_name, "rb")) == NULL)
     {
         perror("Cant open file");
         exit(EXIT_FAILURE);
     }
 
-    while((bytes_read = fread(file_buff, 1, file_buff_size, ptr_file )) > 0)
+    while((bytes_read = fread(file_buff, 1, file_buff_size, file_ptr )) > 0)
     {
         SSL_write(client_ssl, file_buff, bytes_read);
     }
+
+    fclose(file_ptr);
 }
 
 void initialize_ssl()

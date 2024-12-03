@@ -4,13 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload Snippet</title>
-    <link rel="stylesheet" href="upload.css">
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
-
-    <h1 class="logo">Upload Your Snippet</h1>
-    <div class="line"></div>
-
+    <div class="navigation_bar">
+        <img src="snipper_logo.png" alt="logo" height="95">
+        <a href="index.html">Home</a>
+        <a class="active" href="upload.html">Upload</a>
+        <a href="Snippets">Snippets</a>
+        <a href="about">About</a>
+    </div>
+</body>
+<div class="code-box">
+    upload();
+</div>
     <main>
         <section class="upload-form">
             <form action="/submit-snippet" method="POST" class="form-container">
@@ -42,5 +49,4 @@
         </section>
     </main>
 
-</body>
 </html>

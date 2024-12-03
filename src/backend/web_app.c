@@ -150,7 +150,9 @@ void route_post(SSL *client_ssl, char *uri, dict *body)
 
         sqlite3_close(db);
 
-        SSL_write(client_ssl, "HTTP/1.1 204 No content\r\n\r\n", 27);
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
+
+        send_file(client_ssl, "./src/frontend/index.html");
     }
     else
     {

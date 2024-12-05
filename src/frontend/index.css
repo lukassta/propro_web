@@ -21,22 +21,23 @@ body{
 }
 .background_figure {
   width: 100%;
-  height: px; 
-  background-color: rgba(128, 128, 128, 0.5); 
+  height: 100vh; /* Full viewport height */
+  background-color: rgba(128, 128, 128, 0.5);
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: center; /* Centers horizontally */
+  align-items: center;    /* Centers vertically */
 }
+
 .code-box {
-  background-color: grey; 
-  color: #ffffff; 
-  font-family: "Courier New", Courier, monospace; 
-  padding: 10px; 
-  border-radius: 4px; 
-  overflow-x: auto; 
-  white-space: pre; 
+  background-color: grey;
+  color: #ffffff;
+  font-family: "Courier New", Courier, monospace;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre;
   font-size: 20px;
-  text-align: left, center;
+  text-align: left;/* Left-align text inside the box */
 }
 
 
@@ -147,7 +148,8 @@ h2{
   margin: 0 auto;
   background-color: black;
   padding: 30px;
-  border-radius: 8px;
+  border-image-slice: 1;
+
 }
 
 .upload-form form {
@@ -170,18 +172,18 @@ h2{
   font-size: 1em; /* Font size of the text */
   width: 100%; /* Full width */
   border-radius: 10px; /* Rounded corners */
-  border: 5px solid transparent; /* Transparent border for gradient */
-  border-image: linear-gradient(to right, rgb(72, 195, 72), rgb(4, 65, 4)); /* Gradient for the border */
-  border-image-slice: 1; 
+  border: 5px solid transparent; /* Transparent border for gradient */ 
   margin-top: 5px; 
   background-color: grey; 
   color: white;
+}
+textarea{
+  color: solid white;
 }
 
 .upload-form input:focus, 
 .upload-form textarea:focus,
 .upload-form select:focus {
-  border-color: green;
   outline: none;
 }
 
@@ -191,7 +193,7 @@ h2{
   padding: 12px 20px;
   font-size: 1.2em;
   border: none;
-  border-radius: 5px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }

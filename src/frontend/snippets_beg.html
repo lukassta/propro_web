@@ -1,15 +1,45 @@
 <!DOCTYPE html>
-<html lang = "en">
-    <head>
-        <title>Front page</title>
-        <link rel="icon" type="image/x-icon" href="/favicon.png">
-        <link rel="stylesheet" href="index.css">
-        <link rel="icon" type="image/x-icon" href="/favicon.png">
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <body>
-            <h1 class="logo">SnippetOverFlow</h1>
-            <div class="line"></div>
-        </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snipper</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="navigation_bar">
+        <img src="/public/snipper_logo.png" alt="Snipper Logo" class="logo-image">
+        <a href="#">about</a>
+        <a href="#">upload</a>
+        <a href="#">look up</a>
+        <a href="#">home</a>
+    </div>
 
-        <main>
+    <!-- Grey Bar -->
+    <div class="grey-bar">
+        <p>c</p>
+    </div>
+
+    <!-- Snippet Section -->
+    <div class="snippet-container">
+        <!-- Box 1: Team Name, Snippet Name, and Code -->
+        <div class="snippet-box">
+            <p class="green-text"><strong>Team name:</strong> CoolTeam</p>
+            <p class="green-text"><strong>Snippet name:</strong> centering a div</p>
+            <pre class="code-block">
+.center {
+    margin: auto;
+    width: 50%;
+    border: 3px solid green;
+    padding: 10px;
+}
+            </pre>
+        </div>
+        <!-- Box 2: Description -->
+        <div class="description-box">
+            <p>Very cool description, very good code, for those who can’t remember.</p>
+        </div>
+    </div>
+</body>
+</html>

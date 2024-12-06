@@ -73,7 +73,7 @@ void constantly_accept_requests(int server_sock_fd, struct sockaddr_in address, 
     use_cert = SSL_CTX_use_certificate_file(sslctx, "cert.pem" , SSL_FILETYPE_PEM);
     use_prv = SSL_CTX_use_PrivateKey_file(sslctx, "key.pem", SSL_FILETYPE_PEM);
 
-    if(use_cert < 1|| use_prv < 1)
+    if(use_cert < 1 || use_prv < 1)
     {
         perror("Certificate error");
         exit(EXIT_FAILURE);
@@ -123,7 +123,7 @@ void accept_request(int client_sock_fd, SSL_CTX *sslctx)
 void parse_request(SSL *client_ssl)
 {
     int result, ssl_err, b, payload_size;
-    char buffer[1024], *method, *uri, *prot, *temp_ptr, *key_ptr, *value_ptr, *payload_ptr;
+    char buffer[2048], *method, *uri, *prot, *temp_ptr, *key_ptr, *value_ptr, *payload_ptr;
     static dict req_headers[30] = {};
     static dict body[20] = {};
 
@@ -153,7 +153,7 @@ void parse_request(SSL *client_ssl)
         return;
     }
 
-    method = strtok(buffer,  " \t\r\n");
+    method = strtok(buffer, " \t\r\n");
     uri = strtok(NULL, " \t");
     prot = strtok(NULL, " \t\r\n");
 

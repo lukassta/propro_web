@@ -1,4 +1,5 @@
 #include "server.h"
+#include <string.h>
 #include <openssl/ssl.h>
 #include <sqlite3.h>
 #include <stdio.h>
@@ -11,7 +12,7 @@ int callback(void *NotUsed, int argc, char **argv, char **azColName);
 
 int getLatestId(sqlite3 *db);
 
-void deleteEntryById(sqlite3 *db, int idToDelete);
+int delete_snippet(int snippet_id);
 
 void render_snippets_page(SSL *client_ssl);
 
@@ -39,67 +40,72 @@ int main()
     return 0;
 }
 
+
 void route_get(SSL *client_ssl, char *uri)
 {
-    if(!strcmp(uri, "/favicon.png"))
-    {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:image/png\r\n\r\n", 42);
+    char *path;
+    path = strtok(uri, "/0");
 
-        send_file(client_ssl, "./public/favicon.png");
-    }
-    else if(!strcmp(uri, "/snipper_logo.png"))
-    {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
 
-        send_file(client_ssl, "./public/snipper_logo.png");
-    }
-    else if(!strcmp(uri, "/styles.css"))
-    {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
-
-        send_file(client_ssl, "./src/frontend/styles.css");
-    }
-    else if(!strcmp(uri, "/index.css"))
-    {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
-
-        send_file(client_ssl, "./src/frontend/index.css");
-    }
-    else if(!strcmp(uri, "/upload.css"))
-    {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
-
-        send_file(client_ssl, "./src/frontend/upload.css");
-    }
-    else if(!strcmp(uri, "/snippets.css"))
-    {
-        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
-
-        send_file(client_ssl, "./src/frontend/snippets.css");
-    }
-    else if(!strcmp(uri, "/"))
+    if(path ==  NULL)
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
 
         send_file(client_ssl, "./src/frontend/index.html");
     }
-    else if(!strcmp(uri, "/upload"))
+    else if(!strcmp(path, "upload"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
 
         send_file(client_ssl, "./src/frontend/upload.html");
     }
-    else if(!strcmp(uri, "/snippets"))
+    else if(!strcmp(path, "snippets"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
 
         render_snippets_page(client_ssl);
     }
-    else if(!strcmp(uri, "/about"))
+    else if(!strcmp(path, "about"))
     {
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
 
         send_file(client_ssl, "./src/frontend/about.html");
+    }
+    else if(!strcmp(path, "favicon.png"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:image/png\r\n\r\n", 42);
+
+        send_file(client_ssl, "./public/favicon.png");
+    }
+    else if(!strcmp(path, "snipper_logo.png"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
+
+        send_file(client_ssl, "./public/snipper_logo.png");
+    }
+    else if(!strcmp(path, "styles.css"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
+
+        send_file(client_ssl, "./src/frontend/styles.css");
+    }
+    else if(!strcmp(path, "index.css"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
+
+        send_file(client_ssl, "./src/frontend/index.css");
+    }
+    else if(!strcmp(path, "upload.css"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
+
+        send_file(client_ssl, "./src/frontend/upload.css");
+    }
+    else if(!strcmp(path, "snippets.css"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/css\r\n\r\n", 41);
+
+        send_file(client_ssl, "./src/frontend/snippets.css");
     }
     else // Not found
     {
@@ -109,14 +115,25 @@ void route_get(SSL *client_ssl, char *uri)
     }
 }
 
+
 void bad_request_body(SSL *client_ssl)
 {
     SSL_write(client_ssl, "HTTP/1.1 400 Bad request\r\n\r\n", 28);
 }
 
+
 void route_post(SSL *client_ssl, char *uri, dict *body)
 {
-    if(!strcmp(uri, "/submit-snippet"))
+    int id;
+    char *path;
+    path = strtok(uri, "/0");
+
+
+    if(path == NULL)
+    {
+        SSL_write(client_ssl, "HTTP/1.1 404 Not Found\r\n\r\n", 26);
+    }
+    else if(!strcmp(path, "submit-snippet"))
     {
         sqlite3 *db;
 
@@ -154,11 +171,36 @@ void route_post(SSL *client_ssl, char *uri, dict *body)
 
         send_file(client_ssl, "./src/frontend/index.html");
     }
+    else if(!strcmp(path, "delete-snippet"))
+    {
+        path = strtok(NULL, "/0");
+
+        id = atoi(path);
+
+        if(id == 0)
+        {
+            SSL_write(client_ssl, "HTTP/1.1 404 Not Found\r\n\r\n", 26);
+
+            return;
+        }
+
+        if(delete_snippet(id) != 0)
+        {
+            SSL_write(client_ssl, "HTTP/1.1 500 Internal Server Error\r\n\r\n", 38);
+
+            return;
+        }
+
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
+
+        render_snippets_page(client_ssl);
+    }
     else
     {
         SSL_write(client_ssl, "HTTP/1.1 404 Not Found\r\n\r\n", 26);
     }
 }
+
 
 void initiate_db()
 {
@@ -186,6 +228,7 @@ void initiate_db()
     sqlite3_close(db);
 }
 
+
 void render_snippets_page(SSL *client_ssl)
 {
     char *sql = "SELECT * FROM Entries ORDER BY Id", *errorMessage = 0;
@@ -210,6 +253,7 @@ void render_snippets_page(SSL *client_ssl)
     fclose(snippet_template_ptr);
 }
 
+
 int write_snippet_element(void *pointers_ptr, int argc, char **argv, char **azColName)
 {
     char element[2048], buffer[2048];
@@ -229,6 +273,7 @@ int write_snippet_element(void *pointers_ptr, int argc, char **argv, char **azCo
 
     return 0;
 }
+
 
 int getLatestEntryId(sqlite3 *db)
 {
@@ -256,21 +301,34 @@ int getLatestEntryId(sqlite3 *db)
     return latestId;
 }
 
-void deleteEntryById(sqlite3 *db, int idToDelete)
+
+int delete_snippet(int snippet_id)
 {
-    char *error_message = 0;
-    char sql[256];
+    int result_code;
+    char sql[256], *error_message;
+    sqlite3 *db;
 
-    sprintf(sql, "DELETE FROM Entries WHERE Id = '%d';", idToDelete);
+    sqlite3_open(DATABASE, &db);
 
-    int resultCode = sqlite3_exec(db, sql, callback, 0, &error_message);
+    sprintf(sql, "DELETE FROM Entries WHERE Id = '%d';", snippet_id);
 
-    if (resultCode != SQLITE_OK){
+    result_code = sqlite3_exec(db, sql, callback, 0, &error_message);
+
+    if(result_code != SQLITE_OK)
+    {
         fprintf(stderr, "Failed to delete entry: %s\n", sqlite3_errmsg(db));
+
         sqlite3_free(error_message);
         sqlite3_close(db);
+
+        return 1;
     }
+
+    sqlite3_close(db);
+
+    return 0;
 }
+
 
 int callback(void *NotUsed, int argc, char **argv, char **azColName)
 {

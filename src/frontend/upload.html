@@ -1,53 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Snippet</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.png">
-    <link rel="stylesheet" href="index.css">
-</head>
-<body>
-    <div class="navigation_bar">
-        <img src="snipper_logo.png" alt="logo" height="95">
-        <a href="/">Home</a>
-        <a class="active" href="/upload">Upload</a>
-        <a href="/snippets">Snippets</a>
-        <a href="/about">About</a>
-    </div>
-</body>
-<div class="code-box">
-    upload();
-</div>
-    <main>
-        <section class="upload-form">
-            <form action="/submit-snippet" method="POST" class="form-container">
+    <head>
+        <link rel="icon" type="image/x-icon" href="/favicon.png">
+        <link rel="stylesheet" href="/styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
+        <title>Snipper</title>
+    </head>
+    <body>
+        <header>
+            <img id="logo" src="/snipper_logo.png" alt="logo" height="95">
+            <nav>
+                <a href="/">Home</a>
+                <a href="/about">About</a>
+                <a href="/snippets">Snippets</a>
+                <span>Upload</span>
+            </nav>
+        </header>
+        <main>
+            <div class="code-box">
+                upload();
+            </div>
+            <section class="upload-form">
+                <form action="/submit-snippet" method="POST" class="form-container">
 
-                <label for="title">Snippet Name</label>
-                <textarea id="title" name="title" rows="4" placeholder="Enter the Snippet name" required></textarea>
+                    <label for="title">Snippet Name</label>
+                    <div class="textarea-box gradient-border">
+                        <textarea id="title" name="title" rows="4" placeholder="Enter the Snippet name" required></textarea>
+                    </div>
 
-                <label for="description">Snippet Description</label>
-                <textarea id="description" name="description" rows="4" placeholder="Describe your snippet" required></textarea>
+                    <label for="description">Snippet Description</label>
+                    <textarea id="description" name="description" rows="4" placeholder="Describe your snippet" required></textarea>
 
-                <label for="code">Snippet Code</label>
-                <textarea id="code" name="code" rows="10" placeholder="Paste your code here" required></textarea>
+                    <label for="code">Snippet Code</label>
+                    <textarea id="code" name="code" rows="10" placeholder="Paste your code here" required></textarea>
 
-                <label for="language">Select Programming Language</label>
-                <select id="language" name="language" required>
-                    <option value="">Choose Language</option>
-                    <option value="python">Python</option>
-                    <option value="cpp">C++</option>
-                    <option value="c">C</option>
-                    <option value="html">HTML</option>
-                    <option value="css">CSS</option>
-                </select>
+                    <label for="language">Select Programming Language</label>
+                    <select id="language" name="language" required>
+                        <option value="">Choose Language</option>
+                        <option value="python">Python</option>
+                        <option value="cpp">C++</option>
+                        <option value="c">C</option>
+                        <option value="html">HTML</option>
+                        <option value="css">CSS</option>
+                    </select>
 
-                <label for="team_name">Name of the Team/User</label>
-                <textarea id="team_name" name="team_name" rows="4" placeholder="Enter Name of the Team/User" required></textarea>
+                    <label for="team_name">Name of the Team/User</label>
+                    <textarea id="team_name" name="team_name" rows="4" placeholder="Enter Name of the Team/User" required></textarea>
 
-                <button type="submit" class="submit-btn">Upload Snippet</button>
-            </form>
-        </section>
-    </main>
-
+                    <button type="submit" class="submit-btn">Upload Snippet</button>
+                </form>
+            </section>
+        </main>
+    </body>
 </html>

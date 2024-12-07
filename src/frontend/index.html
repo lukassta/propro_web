@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang = "en">
     <head>
-        <title>Front page</title>
         <link rel="icon" type="image/x-icon" href="/favicon.png">
-        <link rel="stylesheet" href="index.css">
-        <meta charset="UTF-8">
+        <link rel="stylesheet" href="/styles.css">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <body>
-            <div class="navigation_bar">
-                <img src="/snipper_logo.png" alt="logo" height="95">
-                <a class="active" href="/">Home</a>
-                <a href="/upload">Upload</a>
-                <a href="/snippets">Snippets</a>
+        <meta charset="UTF-8">
+        <title>Snipper</title>
+    </head>
+    <body>
+        <header>
+            <img id="logo" src="/snipper_logo.png" alt="logo" height="95">
+            <nav>
+                <span>Home</span>
                 <a href="/about">About</a>
-            </div>
-        </body>
+                <a href="/snippets">Snippets</a>
+                <a href="/upload">Upload</a>
+            </nav>
+        </header>
 
         <main>
             <div class="background_figure">
@@ -25,22 +27,17 @@
             </div>
 
             <section class="buttoms">
-                <div class="box dropdown">
-                    <h2>$ Look up Snippets</h2>
-                    <ul class="dropdown-menu">
-                        <li><a href="youtube.com"></a>C</li>
-                        <li><a href="youtube.com"></a>CSS</li>
-                        <li><a href="youtube.com"></a>HTML</li>
-                        <li><a href="youtube.com"></a>Other..</li>
-                    </ul>
-                </div>
-                <a href="upload.html">
-                    <div class="box">
+                <a href="/snippets">
+                    <div class="box gradient-border">
+                        <h2>$ Look up Snippets</h2>
+                    </div>
+                </a>
+                <a href="/upload">
+                    <div class="box gradient-border">
                         <h2>$ Upload Snippets</h2>
                     </div>
                 </a>
             </section>
-          
         </main>
-    </head>
+    </body>
 </html>

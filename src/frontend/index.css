@@ -322,16 +322,32 @@ textarea{
 
 /* Snippet Box: Team Name, Snippet Name, and Code */
 .snippet-box {
-  border: 4px solid; /* Gradient border */
-  border-image: linear-gradient(to right, var(--gradient-start), var(--gradient-end)) 1;
-  border-radius: 50%;
-  background-color: var(--background-color);
+  position: relative; /* Necessary for positioning the pseudo-element */
   padding: 20px;
   margin-bottom: 0px;
   color: white; /* Ensure text remains legible */
-
-
+  background-color: var(--background-color);
 }
+
+.snippet-box::before {
+  content: "";
+  position: absolute;
+  inset: 0; /* Fills the entire element */
+  border-radius: 20px; /* Controls the border's roundness */
+  padding: 4px; /* Matches the border thickness */
+  background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none; /* Prevents interaction with the pseudo-element */
+}
+
+
+
+
+
 
 .snippet-box .green-text {
   color: var(--main-green);
@@ -353,12 +369,26 @@ textarea{
 /* Description Box */
 .description-box {
   font-family: "JetBrains Mono", monospace;
-  border: 4px solid; /* Gradient border */
-  border-image: linear-gradient(to right, var(--gradient-start), var(--gradient-end)) 1;
-  border-radius: 8px;
-  background-color: var(--background-color); 
+  position: relative; /* Necessary for positioning the pseudo-element */
+  border-radius: 20px; /* Controls the box roundness */
+  background-color: var(--background-color);
   padding: 20px;
   margin-top: 0px;
   color: var(--text-grey);
   font-size: 12pt;
+}
+
+.description-box::before {
+  content: "";
+  position: absolute;
+  inset: 0; /* Fills the entire element */
+  border-radius: 20px; /* Matches the box roundness */
+  padding: 4px; /* Matches the border thickness */
+  background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none; /* Prevents interaction with the pseudo-element */
 }

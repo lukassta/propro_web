@@ -312,20 +312,32 @@ textarea{
   font-family: "Lucida Console", "Courier New", monospace;
 }
 
+.snippet-date {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12pt;
+  color: #BDBDBD;
+  margin-bottom: 10px;
+}
+
+
 /* Snippet Box: Team Name, Snippet Name, and Code */
 .snippet-box {
-  border: 5px solid; /* Gradient border */
+  border: 4px solid; /* Gradient border */
   border-image: linear-gradient(to right, var(--gradient-start), var(--gradient-end)) 1;
-  border-radius: 0;
+  border-radius: 50%;
   background-color: var(--background-color);
   padding: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 0px;
   color: white; /* Ensure text remains legible */
+
+
 }
 
 .snippet-box .green-text {
   color: var(--main-green);
   margin: 5px 0;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12pt;
 }
 
 .code-block {
@@ -333,18 +345,20 @@ textarea{
   color: white;
   padding: 10px;
   margin-top: 10px;
-  font-family: "Lucida Console", "Courier New", monospace;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12pt;
   overflow-x: auto;
 }
 
 /* Description Box */
 .description-box {
-  border: 5px solid; /* Gradient border */
+  font-family: "JetBrains Mono", monospace;
+  border: 4px solid; /* Gradient border */
   border-image: linear-gradient(to right, var(--gradient-start), var(--gradient-end)) 1;
   border-radius: 8px;
   background-color: var(--background-color); 
   padding: 20px;
-  margin-top: 10px;
+  margin-top: 0px;
   color: var(--text-grey);
-  font-size: 18px;
+  font-size: 12pt;
 }

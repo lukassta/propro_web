@@ -267,7 +267,7 @@ int write_snippet_element(void *pointers_ptr, int argc, char **argv, char **azCo
 
     fread(buffer, 1, 2048, snippet_template_ptr);
 
-    sprintf(element, buffer, argv[2], argv[5], argv[4], argv[3], argv[1]);
+    sprintf(element, buffer, argv[1], argv[2], argv[4], argv[3], argv[5]);
 
     SSL_write(client_ssl, element, strlen(element));
 

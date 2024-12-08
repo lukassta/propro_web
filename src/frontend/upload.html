@@ -3,6 +3,8 @@
     <head>
         <link rel="icon" type="image/x-icon" href="/favicon.png">
         <link rel="stylesheet" href="styles.css">
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
         <title>Snipper</title>
@@ -14,13 +16,13 @@
                 <a href="/">Home</a>
                 <a href="/about">About</a>
                 <a href="/snippets">Snippets</a>
-                <a><span>Upload</span></a>
+                <span>Upload</span>
             </nav>
         </header>
         <main>
-            <div class="grey-bar-upload">
+            <h2 class="grey-bar full-width">
                 upload();
-            </div>
+            </h2>
             <form action="/submit-snippet" method="POST">
 
                 <label for="team_name">Enter team name</label>
@@ -56,5 +58,8 @@
                 <button type="submit">Upload Snippet!</button>
             </form>
         </main>
+        <footer>
+            <p>Lukas Stavaris, Lukas Zujevas, Rokas Sirvydis, Mažvydas Peleckas | <a href="https://github.com/lukassta/propro_web">GitHub</a></p>
+        </footer>
     </body>
 </html>

@@ -207,7 +207,6 @@ Dropdown Menu Styling
   max-width: 1000px;
   margin: 0 auto;
   padding: 30px;
-  border-image-slice: 1;
 }
 
 .upload-form form {
@@ -230,20 +229,14 @@ Dropdown Menu Styling
 .upload-form select {
   padding: 10px; /* Padding inside the box */
   font-size: 1em; /* Font size of the text */
-  font-family: var(--font-alt); /* Font family */
+  font-family: var(--font-alt);
   width: 100%; /* Full width */
   border-radius: 10px; /* Rounded corners */
   border: 5px solid transparent; /* Transparent border for gradient */ 
-  margin-top: 5px;
-  background-color: #3A3A3A; /* Background color */
-  color: #FFFFFF; /* Text color (example: white) */
+  margin-top: 5px; 
+  background-color: #3A3A3A; 
+  color: white;
 }
-
-.upload-form textarea,
-.upload-form select {
-  color: #FFFFFF; /* Text color specifically for textarea and select elements */
-}
-
 
 .upload-form input:focus, 
 .upload-form textarea:focus,

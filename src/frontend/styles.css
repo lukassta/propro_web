@@ -11,6 +11,10 @@
   --font-main: "JetBrains Mono", monospace;
   --font-alt: "Roboto", sans-serif;
 }
+main{
+  flex: 1;
+  padding: 20px;
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {

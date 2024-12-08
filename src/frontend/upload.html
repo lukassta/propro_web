@@ -21,32 +21,40 @@
             <div class="grey-bar-upload">
                 upload();
             </div>
-            <section class="upload-form">
-                <form action="/submit-snippet" method="POST">
+            <form action="/submit-snippet" method="POST">
 
-                    <label for="team_name">Enter team name</label>
+                <label for="team_name">Enter team name</label>
+                <div class="textarea-box gradient-border">
                     <textarea id="team_name" name="team_name" rows="4" placeholder="Your team name" required></textarea>
-                    
-                    <label for="title">Enter snippet Name</label>
+                </div>
+
+                <label for="title">Enter snippet Name</label>
+                <div class="textarea-box gradient-border">
                     <textarea id="title" name="title" rows="4" placeholder="Your snippet title" required></textarea>
+                </div>
 
-                    <label for="code">Enter your code </label>
+                <label for="code">Enter your code </label>
+                <div class="textarea-box gradient-border">
                     <textarea id="code" name="code" rows="10" placeholder="Your code" required></textarea>
+                </div>
 
-                    <label for="description">Enter Description</label>
+                <label for="description">Enter Description</label>
+                <div class="textarea-box gradient-border">
                     <textarea id="description" name="description" rows="4" placeholder="Describe your snippet" required></textarea>
+                </div>
 
-                    <label for="language">Select Programming Language</label>
+                <label for="language">Select Programming Language</label>
+                <div class="textarea-box gradient-border">
                     <select id="language" name="language" required>
                         <option value="">Choose Language</option>
                         <option value="c">C</option>
                         <option value="html">HTML</option>
                         <option value="css">CSS</option>
                     </select>
+                </div>
 
-                    <button type="submit" class="submit-btn">Upload Snippet</button>
-                </form>
-            </section>
+                <button type="submit" class="submit-btn">Upload Snippet</button>
+            </form>
         </main>
     </body>
 </html>

@@ -32,12 +32,65 @@ body{
     background-color: var(--background-color);
 }
 
+form {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 30px;
+
+  label {
+    font-size: 25px;
+    font-family: var(--font-alt);
+    color: #20C20E;
+    text-align: left;
+    margin-left: 10px;
+    width: 100%;
+  }
+
+  textarea{
+    width: calc(100% - 30px);
+    resize: vertical;
+    border-radius: 20px;
+    color: solid white;
+  }
+
+  select {
+    width: 100%;
+  }
+
+  input,
+  textarea,
+  select {
+    color: solid white;
+    padding: 10px; /* Padding inside the box */
+    font-size: 1em; /* Font size of the text */
+    font-family: var(--font-alt);
+    border-radius: 20px; /* Rounded corners */
+    border: 5px solid transparent; /* Transparent border for gradient */ 
+    margin-top: 5px;
+    background-color: #3A3A3A;
+    color: white;
+    outline: none;
+  }
+
+  button {
+    background-color: green;
+    color: white;
+    padding: 12px 20px;
+    font-size: 1.2em;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #45a049;
+  }
+}
+
 h2 {
   font-size: 35px;
   font-family: var(--font-main);
-}
-p{
-  font-family: var(--font-alt);
 }
 
 header {
@@ -47,13 +100,6 @@ header {
     margin: 20px;
     height: 50px;
   }
-}
-
-textarea{
-  width: 18ch;
-  resize: vertical;
-  border-radius: 20px;
-  color: solid white;
 }
 
 nav {
@@ -78,6 +124,10 @@ nav {
     color: grey;
     padding: 10px 20px;
   }
+}
+
+p{
+  font-family: var(--font-alt);
 }
 
 .background_figure {
@@ -120,6 +170,7 @@ nav {
   transform: scale(0.95);
   cursor: pointer;
 }
+
 .description strong {
   font-weight: bold;
 }
@@ -139,7 +190,6 @@ nav {
   font-weight: bold;
 }
 
-Dropdown Menu Styling
 .dropdown {
   position: relative;
 }
@@ -188,7 +238,7 @@ Dropdown Menu Styling
 .dropdown-menu {
   pointer-events: auto; /* Allow interaction with menu items */
 }
-/* ------------------------------------------------------------------------------------- */
+
 .grey-bar-upload{
   width: 100%;
   height: 76px; /*viewport height */
@@ -201,62 +251,6 @@ Dropdown Menu Styling
   font-family: var(--font-main);
   color: white;
 
-}
-/* Form Styles */
-.upload-form {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 30px;
-}
-
-.upload-form form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.upload-form label {
-  font-size: 25px;
-  font-family: var(--font-alt);
-  color: #20C20E;
-  text-align: left;
-  margin-left: 10px;
-  width: 100%;
-}
-
-.upload-form input,
-.upload-form textarea,
-.upload-form select {
-  padding: 10px; /* Padding inside the box */
-  font-size: 1em; /* Font size of the text */
-  font-family: var(--font-alt);
-  width: 100%; /* Full width */
-  border-radius: 10px; /* Rounded corners */
-  border: 5px solid transparent; /* Transparent border for gradient */ 
-  margin-top: 5px; 
-  background-color: #3A3A3A; 
-  color: white;
-}
-
-.upload-form input:focus, 
-.upload-form textarea:focus,
-.upload-form select:focus {
-  outline: none;
-}
-
-.upload-form .submit-btn {
-  background-color: green;
-  color: white;
-  padding: 12px 20px;
-  font-size: 1.2em;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.upload-form .submit-btn:hover {
-  background-color: #45a049;
 }
 
 .grey-bar {
@@ -281,7 +275,6 @@ Dropdown Menu Styling
   color: #BDBDBD;
   margin-bottom: 10px;
 }
-
 
 .snippet-box {
   position: relative;

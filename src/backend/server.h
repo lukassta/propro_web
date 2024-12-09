@@ -89,12 +89,7 @@ void constantly_accept_requests(int server_sock_fd, struct sockaddr_in address, 
             exit(EXIT_FAILURE);
         }
 
-        if(fork() == 0)
-        {
-            accept_request(client_sock_fd, sslctx);
-            exit(0);
-        }
-
+        accept_request(client_sock_fd, sslctx);
     }
 }
 

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #define PORT 8080
 
@@ -65,7 +66,7 @@ void start_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *a
 void constantly_accept_requests(int server_sock_fd, struct sockaddr_in address, socklen_t addrlen)
 {
     SSL_CTX *sslctx;
-    int client_sock_fd, use_cert, use_prv;
+    int client_sock_fd, use_cert, use_prv, pid;
 
     sslctx = SSL_CTX_new(TLS_server_method());
     SSL_CTX_set_options(sslctx, SSL_OP_SINGLE_DH_USE);
@@ -89,7 +90,20 @@ void constantly_accept_requests(int server_sock_fd, struct sockaddr_in address, 
             exit(EXIT_FAILURE);
         }
 
-        accept_request(client_sock_fd, sslctx);
+        // NOTE: Double fork prevents zombie processes
+        pid = fork();
+
+        if(pid == 0)
+        {
+            if(fork() == 0)
+            {
+                accept_request(client_sock_fd, sslctx);
+                exit(0);
+            }
+            exit(0);
+        }
+
+        waitpid(pid, 0, 0);
     }
 }
 

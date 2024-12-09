@@ -18,6 +18,10 @@ void render_snippets_page(SSL *client_ssl);
 
 int write_snippet_element(void *client_ssl_p, int argc, char **argv, char **azColName);
 
+void render_admin_snippets_page(SSL *client_ssl);
+
+int write_admin_snippet_element(void *client_ssl_p, int argc, char **argv, char **azColName);
+
 const char DATABASE[] = "src/backend/snipper.db";
 
 struct TwoPointers
@@ -64,6 +68,12 @@ void route_get(SSL *client_ssl, char *uri)
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
 
         render_snippets_page(client_ssl);
+    }
+    else if(!strcmp(path, "secret-admin"))
+    {
+        SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
+
+        render_admin_snippets_page(client_ssl);
     }
     else if(!strcmp(path, "about"))
     {
@@ -171,7 +181,7 @@ void route_post(SSL *client_ssl, char *uri, dict *body)
 
         send_file(client_ssl, "./src/frontend/index.html");
     }
-    else if(!strcmp(path, "delete-snippet"))
+    else if(!strcmp(path, "secret-delete-snippet"))
     {
         path = strtok(NULL, "/0");
 
@@ -193,7 +203,7 @@ void route_post(SSL *client_ssl, char *uri, dict *body)
 
         SSL_write(client_ssl, "HTTP/1.1 200 OK\nContent-Type:text/html\r\n\r\n", 42);
 
-        render_snippets_page(client_ssl);
+        render_admin_snippets_page(client_ssl);
     }
     else
     {
@@ -268,6 +278,52 @@ int write_snippet_element(void *pointers_ptr, int argc, char **argv, char **azCo
     fread(buffer, 1, 2048, snippet_template_ptr);
 
     sprintf(element, buffer, argv[1], argv[2], argv[4], argv[3], argv[5]);
+
+    SSL_write(client_ssl, element, strlen(element));
+
+    return 0;
+}
+
+
+void render_admin_snippets_page(SSL *client_ssl)
+{
+    char *sql = "SELECT * FROM Entries ORDER BY Id", *errorMessage = 0;
+    sqlite3 *db;
+    FILE *snippet_template_ptr;
+    struct TwoPointers pointers;
+
+    pointers.pointer_1 = client_ssl;
+    snippet_template_ptr = fopen("./src/frontend/admin_snippet_template.html", "rb");
+    pointers.pointer_2 = snippet_template_ptr;
+
+    sqlite3_open(DATABASE, &db);
+
+    send_file(client_ssl, "./src/frontend/snippets_beg.html");
+
+    sqlite3_exec(db, sql, write_admin_snippet_element, &pointers, &errorMessage);
+
+    send_file(client_ssl, "./src/frontend/snippets_end.html");
+
+    sqlite3_close(db);
+
+    fclose(snippet_template_ptr);
+}
+
+
+int write_admin_snippet_element(void *pointers_ptr, int argc, char **argv, char **azColName)
+{
+    char element[2048], buffer[2048];
+    struct TwoPointers *pointers;
+    SSL *client_ssl;
+    FILE *snippet_template_ptr;
+
+    pointers = pointers_ptr;
+    client_ssl = pointers->pointer_1;
+    snippet_template_ptr = pointers->pointer_2;
+
+    fread(buffer, 1, 2048, snippet_template_ptr);
+
+    sprintf(element, buffer, argv[1], argv[2], argv[4], argv[3], argv[5], argv[0]);
 
     SSL_write(client_ssl, element, strlen(element));
 

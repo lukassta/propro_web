@@ -133,6 +133,7 @@ void parse_request(SSL *client_ssl)
 {
     int result, ssl_err, b, payload_size;
     char buffer[2048], *method, *uri, *prot, *temp_ptr, *key_ptr, *value_ptr, *payload_ptr;
+
     static dict req_headers[30] = {};
     static dict body[20] = {};
 
@@ -163,6 +164,7 @@ void parse_request(SSL *client_ssl)
     }
 
     method = strtok(buffer, " \t\r\n");
+
     uri = strtok(NULL, " \t");
     prot = strtok(NULL, " \t\r\n");
 
@@ -260,6 +262,7 @@ void send_file(SSL *client_ssl, char *file_name)
     size_t bytes_read;
 
     if((file_ptr = fopen(file_name, "rb")) == NULL)
+
     {
         perror("Cant open file");
         exit(EXIT_FAILURE);

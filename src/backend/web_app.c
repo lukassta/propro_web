@@ -1,5 +1,6 @@
 #include "server.h"
 #include <string.h>
+
 #include <openssl/ssl.h>
 #include <sqlite3.h>
 #include <stdio.h>
@@ -9,6 +10,7 @@ void initiate_db();
 void initiate_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *addrlen);
 
 int callback(void *NotUsed, int argc, char **argv, char **azColName);
+
 
 int getLatestId(sqlite3 *db);
 
@@ -125,8 +127,8 @@ void route_get(SSL *client_ssl, char *uri)
     }
 }
 
-
 void bad_request_body(SSL *client_ssl)
+
 {
     SSL_write(client_ssl, "HTTP/1.1 400 Bad request\r\n\r\n", 28);
 }
@@ -235,6 +237,7 @@ void initiate_db()
         sqlite3_close(db);
         exit(EXIT_FAILURE);
     }
+
     sqlite3_close(db);
 }
 
@@ -303,6 +306,7 @@ void render_admin_snippets_page(SSL *client_ssl)
     sqlite3_exec(db, sql, write_admin_snippet_element, &pointers, &errorMessage);
 
     send_file(client_ssl, "./src/frontend/snippets_end.html");
+
 
     sqlite3_close(db);
 

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #define PORT 8080
 
@@ -65,7 +66,7 @@ void start_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *a
 void constantly_accept_requests(int server_sock_fd, struct sockaddr_in address, socklen_t addrlen)
 {
     SSL_CTX *sslctx;
-    int client_sock_fd, use_cert, use_prv;
+    int client_sock_fd, use_cert, use_prv, pid;
 
     sslctx = SSL_CTX_new(TLS_server_method());
     SSL_CTX_set_options(sslctx, SSL_OP_SINGLE_DH_USE);
@@ -73,7 +74,7 @@ void constantly_accept_requests(int server_sock_fd, struct sockaddr_in address, 
     use_cert = SSL_CTX_use_certificate_file(sslctx, "cert.pem" , SSL_FILETYPE_PEM);
     use_prv = SSL_CTX_use_PrivateKey_file(sslctx, "key.pem", SSL_FILETYPE_PEM);
 
-    if(use_cert < 1|| use_prv < 1)
+    if(use_cert < 1 || use_prv < 1)
     {
         perror("Certificate error");
         exit(EXIT_FAILURE);
@@ -89,12 +90,20 @@ void constantly_accept_requests(int server_sock_fd, struct sockaddr_in address, 
             exit(EXIT_FAILURE);
         }
 
-        if(fork() == 0)
+        // NOTE: Double fork prevents zombie processes
+        pid = fork();
+
+        if(pid == 0)
         {
-            accept_request(client_sock_fd, sslctx);
+            if(fork() == 0)
+            {
+                accept_request(client_sock_fd, sslctx);
+                exit(0);
+            }
             exit(0);
         }
 
+        waitpid(pid, 0, 0);
     }
 }
 
@@ -123,7 +132,8 @@ void accept_request(int client_sock_fd, SSL_CTX *sslctx)
 void parse_request(SSL *client_ssl)
 {
     int result, ssl_err, b, payload_size;
-    char buffer[1024], *method, *uri, *prot, *temp_ptr, *key_ptr, *value_ptr, *payload_ptr;
+    char buffer[2048], *method, *uri, *prot, *temp_ptr, *key_ptr, *value_ptr, *payload_ptr;
+
     static dict req_headers[30] = {};
     static dict body[20] = {};
 
@@ -153,7 +163,8 @@ void parse_request(SSL *client_ssl)
         return;
     }
 
-    method = strtok(buffer,  " \t\r\n");
+    method = strtok(buffer, " \t\r\n");
+
     uri = strtok(NULL, " \t");
     prot = strtok(NULL, " \t\r\n");
 
@@ -247,19 +258,22 @@ void send_file(SSL *client_ssl, char *file_name)
 {
     int file_buff_size = 16384;
     char file_buff[file_buff_size];
-    FILE *ptr_file;
+    FILE *file_ptr;
     size_t bytes_read;
 
-    if((ptr_file = fopen(file_name, "rb")) == NULL)
+    if((file_ptr = fopen(file_name, "rb")) == NULL)
+
     {
         perror("Cant open file");
         exit(EXIT_FAILURE);
     }
 
-    while((bytes_read = fread(file_buff, 1, file_buff_size, ptr_file )) > 0)
+    while((bytes_read = fread(file_buff, 1, file_buff_size, file_ptr )) > 0)
     {
         SSL_write(client_ssl, file_buff, bytes_read);
     }
+
+    fclose(file_ptr);
 }
 
 void initialize_ssl()

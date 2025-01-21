@@ -1,33 +1,6 @@
-#include <ctype.h>
-#include <netinet/in.h>
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#include "headers.h"
+
 #define PORT 8080
-
-typedef struct
-{
-    char *key;
-    char *value;
-}
-dict;
-
-void accept_request(int client_sock_fd, SSL_CTX *sslctx);
-void parse_request(SSL *client_ssl);
-void route_get(SSL *client_ssl, char *uri);
-void route_post(SSL *client_ssl, char *uri, dict *body);
-char *get_value_by_key(dict *dictionary, const char* name);
-void url_decode(char *src);
-
-void initialize_ssl();
-void destroy_ssl();
-void shutdown_ssl(SSL *client_ssl);
 
 void start_server(int *server_sock_fd, struct sockaddr_in *address, socklen_t *addrlen)
 {
@@ -131,7 +104,7 @@ void accept_request(int client_sock_fd, SSL_CTX *sslctx)
 
 void parse_request(SSL *client_ssl)
 {
-    int result, ssl_err, b, payload_size;
+    int result, ssl_err, payload_size;
     char buffer[2048], *method, *uri, *prot, *temp_ptr, *key_ptr, *value_ptr, *payload_ptr;
 
     static dict req_headers[30] = {};

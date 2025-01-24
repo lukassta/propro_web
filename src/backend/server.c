@@ -86,12 +86,20 @@ void accept_request(int client_sock_fd, SSL_CTX *sslctx)
     int ssl_err;
 
     client_ssl = SSL_new(sslctx);
-    SSL_set_fd(client_ssl, client_sock_fd);
-    ssl_err = SSL_accept(client_ssl);
-
-    if(ssl_err <= 0)
+    if(client_ssl == 0)
     {
-        printf("SSL failed %d\n", SSL_get_error(client_ssl, ssl_err));
+        printf("SSL creation failed\n");
+        close(client_sock_fd);
+        return;
+    }
+
+    if(SSL_set_fd(client_ssl, client_sock_fd) == 0)
+    {
+        printf("Connection of the SSL object with a file descriptor failed\n");
+    }
+    else if((ssl_err = SSL_accept(client_ssl)) <= 0)
+    {
+        printf("SSL failed (%d)\n", SSL_get_error(client_ssl, ssl_err));
     }
     else
     {
